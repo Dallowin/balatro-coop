@@ -128,6 +128,7 @@ section { padding: var(--sec) 0; }
 
 /* media in a dark "screen" bezel */
 .media { margin: 0; }
+.media.teaser { margin: 0 0 28px; }
 .bezel { background: #081513; padding: 6px; border-radius: var(--r); border: 2px solid var(--line); box-shadow: 0 6px 0 var(--shadow); }
 .bezel img, .bezel video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 8px; background: #000; }
 .media figcaption { color: var(--muted); font-size: 14px; line-height: 1.5; margin-top: 12px; padding: 0 4px; }
@@ -312,6 +313,10 @@ html[lang="en"] [data-l="ru"], html[lang="ru"] [data-l="en"] { display: none !im
 			<span class="kicker"><span data-l="en">In action</span><span data-l="ru">В деле</span></span>
 			<h2><span data-l="en">See it in the game</span><span data-l="ru">Как это выглядит в игре</span></h2>
 		</div>
+		<figure class="media teaser reveal">
+			<div class="bezel"><video src="media/teaser.mp4" poster="media/teaser.webp" width="1920" height="1080" controls playsinline preload="none" aria-label="Balatro Co-op teaser"></video></div>
+			<figcaption><span data-l="en">Teaser (sound on). Music: "100 Victories" by Zane Little, CC0</span><span data-l="ru">Тизер (со звуком). Музыка: «100 Victories», Zane Little, CC0</span></figcaption>
+		</figure>
 		<div class="grid g3">
 			<figure class="media reveal">
 				<div class="bezel"><video src="media/team-win.mp4" poster="media/team-win.webp" width="1920" height="1080" muted loop playsinline preload="none" data-auto aria-label="The team beats the blind"></video></div>
