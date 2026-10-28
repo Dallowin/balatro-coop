@@ -46,7 +46,11 @@ local function shop_card(card)
 end
 
 -- Returns true when the purchase may go ahead right now.
-local function may_buy(card, replay)
+-- optimistic (guest, a plain "Buy" of a joker / consumable / playing card):
+-- buy at once and let the host settle it afterwards; if the host got it
+-- first, our copy is taken back and the money refunded. Waiting for the
+-- host's answer first made every purchase lag by a round trip.
+local function may_buy(card, replay, optimistic)
 	if not COOP.is_active() or not shop_card(card) then
 		return true
 	end
@@ -61,6 +65,16 @@ local function may_buy(card, replay)
 		return true
 	end
 	if S.approved[sid] then
+		return true
+	end
+	if optimistic then
+		if S.waiting[sid] then
+			return false -- already bought, the answer is on its way
+		end
+		S.waiting[sid] = { card = card, cost = card.cost or 0, optimistic = true }
+		S.buying[sid] = true
+		S.taken[sid] = true
+		COOP.send('claim', { sid = sid })
 		return true
 	end
 	if not S.waiting[sid] then
@@ -92,6 +106,24 @@ function S.on_claim_result(sid, ok)
 	local pending = S.waiting[sid]
 	S.waiting[sid] = nil
 	if not pending then
+		return
+	end
+	if pending.optimistic then
+		S.buying[sid] = nil
+		if not ok then
+			-- the host had it first: give it back
+			local c = pending.card
+			if c and not c.removed then
+				if c.area then
+					c.area:remove_card(c)
+				end
+				c:start_dissolve()
+			end
+			if pending.cost > 0 then
+				ease_dollars(pending.cost)
+			end
+			COOP.popup(localize('k_coop_already_bought'), G.C.RED)
+		end
 		return
 	end
 	local replay = pending.replay
@@ -385,7 +417,7 @@ function S.install_hooks()
 		end
 		if not may_buy(card, function()
 			return buy_ref(e)
-		end) then
+		end, e and e.config and e.config.id ~= 'buy_and_use') then
 			return false
 		end
 		return buy_ref(e)

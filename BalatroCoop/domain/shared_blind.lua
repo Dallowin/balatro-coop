@@ -249,7 +249,7 @@ function SB.apply_partner_score()
 					ref_table = G.GAME,
 					ref_value = 'chips',
 					ease_to = G.GAME.chips + diff, -- chips as they are now, at this point of the queue
-					delay = 0.5,
+					delay = 0.35,
 					func = function(t)
 						return math.floor(t)
 					end,
@@ -278,6 +278,22 @@ function SB.on_partner_ready(round, hands_left, played, total, turn)
 	r.hands_left = hands_left
 	r.played = math.max(r.played, played or 0)
 	r.total = math.max(r.total, total or 0)
+end
+
+-- The partner's hand total shows on their HUD (streamed live, see
+-- ui/partner_view.lua) a good while before their report arrives: count it
+-- into the round score right then. The report only corrects the difference.
+function SB.prelanding(hand_total)
+	if not in_blind() or not hand_total or hand_total <= 0 then
+		return
+	end
+	local round = SB.round()
+	if SB.applied_round ~= round then
+		SB.applied_round = round
+		SB.applied = 0
+	end
+	local r = report(round)
+	r.total = math.max(r.total, (SB.applied or 0) + math.floor(hand_total))
 end
 
 function SB.on_partner_report(round, total, hands_left, hand, played)

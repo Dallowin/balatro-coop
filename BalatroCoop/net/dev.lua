@@ -175,7 +175,15 @@ local function place_window()
 		local dw, dh = love.window.getDesktopDimensions(1)
 		local w, h = math.floor(dw / 2), math.floor(dh * 0.9)
 		local x, y, borderless = DEV.role == 'host' and 0 or w, 30, false
-		if DEV.lang and dw >= 2400 then
+		local split = false
+		for _, a in ipairs(arg or {}) do
+			split = split or a == '--coop-split'
+		end
+		if split and dw >= 2400 then
+			-- recording both players at once: two borderless 1280x720 windows
+			-- side by side along the top of the screen (capture 2560x720)
+			w, h, x, y, borderless = 1280, 720, DEV.role == 'host' and 0 or 1280, 0, true
+		elseif DEV.lang and dw >= 2400 then
 			-- recording the site's clips: the host is a borderless 1920x1080
 			-- in the top left corner, the bot gets the strip to its right
 			if DEV.role == 'host' then
@@ -241,6 +249,9 @@ DEV.autostart = not DEV.lang
 -- without hunting for them: one half of Yin/Yang each, and a few cards with
 -- co-op seals and enhancements in hand.
 local function showcase_run()
+	if DEV.lang then
+		return -- recording: clean boards (the 'lategame' command sets them up)
+	end
 	if G.STAGE ~= G.STAGES.RUN or G.STATE ~= G.STATES.SELECTING_HAND or not COOP.is_active() then
 		return
 	end
@@ -259,7 +270,9 @@ end
 -- without its keyboard (staging the site's clips): coop_dev_cmd_host.txt /
 -- coop_dev_cmd_guest.txt, one per line: fx, bot, pause, play, give <key>,
 -- enhance <key>, seal <key>, money <n>, casino, wheel <0-7>, ping <level>,
--- score <share>, win <margin>, ghost <joker>, burn.
+-- score <share>, win <margin>, ghost <joker>, burn, lategame, stopat
+-- shop|hand, start, func <G.FUNCS name>, hl <i,j>, hlj <i>, use <i>,
+-- boss <key>, clearjokers.
 local CMD_FILE = 'coop_dev_cmd_' .. DEV.role .. '.txt'
 DEV.cmd_at = 0
 
@@ -290,6 +303,31 @@ local function commands()
 				COOP.BOT.on = true
 			elseif cmd == 'start' then
 				COOP.SL.start()
+			elseif cmd == 'func' then
+				-- press any button of the game or the mod by its G.FUNCS name
+				G.FUNCS[a]({ config = {}, UIBox = {} })
+			elseif cmd == 'hl' or cmd == 'hlj' then
+				-- select hand cards (hl 1,3,5) or jokers (hlj 2) by position
+				local area = cmd == 'hl' and G.hand or G.jokers
+				area:unhighlight_all()
+				for n in a:gmatch('%d+') do
+					local c = area.cards[tonumber(n)]
+					if c then
+						area:add_to_highlighted(c, true)
+					end
+				end
+			elseif cmd == 'use' then
+				local c = G.consumeables and G.consumeables.cards[tonumber(a) or 1]
+				if c then
+					G.FUNCS.use_card({ config = { ref_table = c } })
+				end
+			elseif cmd == 'boss' then
+				-- the next boss blind (send to both windows: same on both sides)
+				G.GAME.round_resets.blind_choices.Boss = a
+			elseif cmd == 'clearjokers' then
+				for i = #G.jokers.cards, 1, -1 do
+					G.jokers.cards[i]:start_dissolve(nil, true)
+				end
 			elseif cmd == 'lategame' then
 				-- a late-game board for the clips: strong jokers with
 				-- editions, levelled hands, money, ante 6
@@ -313,6 +351,26 @@ local function commands()
 				SMODS.add_card({ set = 'Base', area = G.hand, seal = a })
 			elseif cmd == 'money' then
 				ease_dollars(tonumber(a) or 20)
+			elseif cmd == 'setmoney' then
+				ease_dollars((tonumber(a) or 0) - G.GAME.dollars, true)
+			elseif cmd == 'bondhand' then
+				-- hand cards 1..n get the Bond seal (to test it)
+				for i = 1, math.min(tonumber(a) or 2, #G.hand.cards) do
+					G.hand.cards[i]:set_seal('coop_bond', true, true)
+				end
+			elseif cmd == 'dbg' then
+				local P = COOP.PV
+				sendInfoMessage('partner hand codes: ' .. tostring(P.partner and P.partner.hand), COOP.id)
+				for i, c in ipairs(P.hand_area and P.hand_area.cards or {}) do
+					sendInfoMessage(('copy %d id=%s facing=%s sprite=%s look=%s'):format(i, tostring(c.coop_id), tostring(c.facing), tostring(c.sprite_facing), tostring(c.coop_look)), COOP.id)
+				end
+				for i, c in ipairs(G.hand.cards) do
+					if i <= 3 then sendInfoMessage(('own %d facing=%s'):format(i, tostring(c.facing)), COOP.id) end
+				end
+			elseif cmd == 'flip' then
+				for i = 1, math.min(tonumber(a) or 3, #G.hand.cards) do
+					G.hand.cards[i]:flip()
+				end
 			elseif cmd == 'casino' then
 				G.FUNCS.coop_casino_open()
 			elseif cmd == 'wheel' then
@@ -374,7 +432,8 @@ local function stop_at()
 		return
 	end
 	local there = (s == 'shop' and G.STATE == G.STATES.SHOP and G.shop_jokers and #G.shop_jokers.cards > 0)
-		or (s == 'hand' and G.STATE == G.STATES.SELECTING_HAND and COOP.SB.my_turn() == true and COOP.PV and COOP.PV.hand_area)
+		or ((s == 'hand' or s == 'boss') and G.STATE == G.STATES.SELECTING_HAND and COOP.SB.my_turn() == true and COOP.PV and COOP.PV.hand_area
+			and (s == 'hand' or (G.GAME.blind and G.GAME.blind.boss)))
 	if there then
 		DEV.stop_at = nil
 		COOP.BOT.on = false

@@ -46,6 +46,7 @@ local function encode(card)
 		card.seal or '',
 		card.highlighted and '1' or '',
 		card.ability and card.ability.coop_uid or '', -- shared deck id (Shared Hand)
+		card.facing == 'back' and '1' or '', -- face down (boss blinds): the partner must not see it either
 	}, '|')
 end
 
@@ -243,7 +244,8 @@ local function parse(code)
 		seal = f[5] ~= '' and f[5] or nil,
 		highlighted = f[6] == '1',
 		uid = f[7] ~= '' and f[7] or nil,
-		look = table.concat({ f[2] or '', f[3] or '', f[4] or '', f[5] or '' }, '|'),
+		back = f[8] == '1',
+		look = table.concat({ f[2] or '', f[3] or '', f[4] or '', f[5] or '', f[8] or '' }, '|'),
 	}
 end
 
@@ -262,6 +264,9 @@ local function make_card(item, area, scale, from_deck)
 	end
 	if item.seal then
 		card:set_seal(item.seal, true, true)
+	end
+	if item.back then
+		card.facing, card.sprite_facing = 'back', 'back'
 	end
 	card.coop_display = true
 	card.coop_id = item.id
@@ -295,7 +300,7 @@ local function sync(area, items, scale, on_new, from_deck)
 		end
 		if not card then
 			card = make_card(item, area, scale, from_deck)
-			area:emplace(card)
+			area:emplace(card, nil, item.back) -- emplace turns face-down cards up unless told not to
 			if on_new then
 				on_new(card)
 			end
@@ -670,6 +675,13 @@ function PV.on_partner_live(p)
 	PV.ht_recv = (PV.ht_recv or 0) + 1
 	if COOP.boss_is and COOP.boss_is('bl_coop_fog') then
 		return -- hidden by The Fog
+	end
+	-- the hand's total is on their HUD: count it into our round score now
+	if p.total > 0 and not PV.live_landed then
+		PV.live_landed = true
+		pcall(COOP.SB.prelanding, p.total)
+	elseif p.total == 0 then
+		PV.live_landed = false
 	end
 	if p.name == '' and p.chips == 0 and p.mult == 0 and p.total == 0 then
 		-- their hand is over: clear it, unless we are scoring or picking cards ourselves

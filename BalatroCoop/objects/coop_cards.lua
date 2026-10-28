@@ -445,7 +445,11 @@ function CC.update()
 	end
 	local n = math.min(CC.pending_draws, #G.deck.cards)
 	CC.pending_draws = 0
-	G.FUNCS.draw_from_deck_to_hand(n)
+	-- straight from the deck, over the hand limit: the game's own draw only
+	-- fills the hand up to its size, and by then it is usually full
+	for _ = 1, n do
+		draw_card(G.deck, G.hand, 90, 'up', true)
+	end
 	COOP.popup(localize('k_coop_bond_got'), HEX('2FB8A8'))
 	pcall(function()
 		COOP.FX.comet(COOP.FX.partner_hand(), G.hand, { COOP.FX.TEAL, G.C.WHITE })

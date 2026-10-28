@@ -111,7 +111,14 @@ end
 CS.text = { info = '', bet = '', slots = '', dealer = '', hand1 = '', hand2 = '', bj = '' }
 CS.bet = 2
 
+-- what may be bet: the money plus how far the run may go into debt (Credit
+-- Card lets it go to -$20, like it does for the shop)
 local function dollars()
+	local d = tonumber(G.GAME and G.GAME.dollars) or 0
+	return d - math.min(0, tonumber(G.GAME and G.GAME.bankrupt_at) or 0)
+end
+
+local function cash()
 	return tonumber(G.GAME and G.GAME.dollars) or 0
 end
 
@@ -1222,7 +1229,7 @@ end
 -- Per frame ---------------------------------------------------------------------
 
 function CS.update_info()
-	CS.text.info = localize({ type = 'variable', key = 'coop_casino_info', vars = { dollars() } })
+	CS.text.info = localize({ type = 'variable', key = 'coop_casino_info', vars = { cash() } })
 	CS.text.bet = '$' .. CS.bet
 end
 
