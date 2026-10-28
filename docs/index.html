@@ -40,10 +40,11 @@ body { margin: 0; color: var(--ink); font: 16px/1.6 Inter, system-ui, sans-serif
 		radial-gradient(45% 40% at 70% 80%, #6a2f3a 0%, transparent 70%),
 		radial-gradient(40% 35% at 25% 85%, #3b5e47 0%, transparent 70%),
 		var(--bg);
-	filter: blur(30px) saturate(1.1);
-	animation: swirl 40s linear infinite;
+	animation: swirl 60s ease-in-out infinite alternate;
+	will-change: transform;
 }
-@keyframes swirl { to { transform: rotate(360deg) scale(1.1); } }
+/* a slow drift; no blur filter (heavy on weak GPUs) */
+@keyframes swirl { to { transform: rotate(25deg) scale(1.08); } }
 /* CRT scanlines */
 .crt { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0,0,0,.14) 0 1px, transparent 1px 3px); }
 @media (prefers-reduced-motion: reduce) { .bgfx { animation: none; } }
