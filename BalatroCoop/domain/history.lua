@@ -32,7 +32,9 @@ local function save()
 	if json_ok then
 		local ok, data = pcall(json.encode, H.list)
 		if ok then
-			pcall(love.filesystem.write, FILE, data)
+			if not (COOP.DEV and COOP.DEV.role == 'guest') then
+				pcall(love.filesystem.write, FILE, data)
+			end
 		end
 	end
 end

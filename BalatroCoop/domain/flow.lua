@@ -243,6 +243,14 @@ function F.install_hooks()
 			end
 			F.chosen[id] = true
 			F.remember_choice(choice)
+			-- always the blind on deck, whichever "Select" was pressed: for a
+			-- moment all three buttons are live, and the game takes the blind
+			-- from the button (one side on the Boss, the other on Small)
+			local opt = blind_option(on_deck)
+			local key = G.GAME.round_resets.blind_choices[on_deck]
+			if opt and key and G.P_BLINDS[key] then
+				return F.select_blind_ref({ UIBox = opt, config = { ref_table = G.P_BLINDS[key] } })
+			end
 		end
 		return F.select_blind_ref(e)
 	end

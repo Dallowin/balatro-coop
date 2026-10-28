@@ -367,13 +367,14 @@ local function create_areas()
 	PV.label = UIBox({
 		definition = {
 			n = G.UIT.ROOT,
-			config = { align = 'cm', colour = { 0, 0, 0, 0.35 }, r = 0.1, padding = 0.1 },
+			config = { align = 'cm', colour = { 0, 0, 0, 0.35 }, r = 0.1, padding = 0.06 },
 			nodes = {
-				{ n = G.UIT.T, config = { ref_table = PV, ref_value = 'label_text', scale = 0.32, colour = G.C.WHITE, shadow = true } },
+				{ n = G.UIT.T, config = { ref_table = PV, ref_value = 'label_text', scale = 0.3, colour = G.C.WHITE, shadow = true } },
 			},
 		},
-		-- under the partner's hand: above it is our joker row and its "1/5" count
-		config = { align = 'bm', offset = { x = 0, y = 0.25 }, major = PV.hand_area, bond = 'Weak' },
+		-- in the gap above the partner's hand: below it the played cards and
+		-- their scoring would run over the text
+		config = { align = 'tm', offset = { x = 0, y = -0.12 }, major = PV.hand_area, bond = 'Weak' },
 	})
 	PV.label_text = ''
 end
@@ -650,7 +651,8 @@ function PV.stream_live(dt)
 	local played = G.GAME.last_hand_played and G.GAME.hands[G.GAME.last_hand_played]
 	local live = {
 		name = tostring(h.handname or ''),
-		level = played and tonumber(played.level) or 0,
+		-- 0 once the HUD cleared it (the total shows): as the HUD shows it
+		level = played and (h.hand_level or '') ~= '' and tonumber(played.level) or 0,
 		chips = tonumber(h.chips) or 0,
 		mult = tonumber(h.mult) or 0,
 		-- the hand's total, shown in place of the hand name once it's counted
@@ -682,9 +684,11 @@ function PV.on_partner_live(p)
 		G.GAME.current_round.current_hand.chip_total = 0
 	end
 	PV.replaying = true
+	-- mirror exactly, blanks included: once the total shows, the game clears
+	-- the hand name and level (kept, they ran into the total)
 	local ok, err = pcall(update_hand_text, { immediate = true, delay = 0 }, {
-		handname = p.name ~= '' and p.name or nil,
-		level = p.level > 0 and p.level or nil,
+		handname = p.name,
+		level = p.level > 0 and p.level or '',
 		chips = p.chips,
 		mult = p.mult,
 		chip_total = p.total > 0 and p.total or nil,

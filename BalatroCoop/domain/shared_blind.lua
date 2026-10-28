@@ -200,6 +200,17 @@ function SB.counted_score()
 	return COOP.SYN.counted(math.max(SB.own_score(), 0), SB.partner_counted_score())
 end
 
+-- once per blind: the team's win effect (ui/fx.lua)
+function SB.celebrate()
+	local round = SB.round()
+	if SB.celebrated == round then
+		return
+	end
+	SB.celebrated = round
+	local margin = G.GAME.blind.chips > 0 and SB.counted_score() / G.GAME.blind.chips or 1
+	pcall(COOP.FX.team_win, margin)
+end
+
 function SB.team_beat_blind()
 	return SB.counted_score() - G.GAME.blind.chips >= 0
 end
@@ -244,8 +255,8 @@ function SB.apply_partner_score()
 					end,
 				}), nil, true)
 				if diff > 0 then
-					play_sound('chips2')
-					COOP.popup(localize({ type = 'variable', key = 'coop_partner_scored', vars = { number_format(diff) } }), G.C.BLUE)
+					pcall(COOP.FX.score_in, diff) -- flies in while it counts up
+					-- the amount itself flies in as a label (ui/fx.lua): no pop-up on top
 					COOP.on_partner_scored(diff)
 				end
 				return true
@@ -425,6 +436,7 @@ function SB.update()
 	end
 
 	if SB.team_beat_blind() then
+		SB.celebrate()
 		return end_blind()
 	end
 	if my_hands_left() < 1 and SB.partner_done() then
@@ -440,6 +452,7 @@ function SB.update()
 			G.E_MANAGER:add_event(Event({
 				func = function()
 					play_sound('timpani')
+					pcall(COOP.FX.your_turn)
 					return true
 				end,
 			}))
@@ -483,6 +496,7 @@ function SB.after_hand_scored()
 	SB.apply_partner_score() -- scoring has finished, safe to add what arrived meanwhile
 
 	if SB.team_beat_blind() then
+		SB.celebrate()
 		G.STATE = G.STATES.NEW_ROUND
 	elseif my_hands_left() < 1 and SB.partner_done() then
 		G.STATE = G.STATES.NEW_ROUND -- nobody has hands left: run is lost

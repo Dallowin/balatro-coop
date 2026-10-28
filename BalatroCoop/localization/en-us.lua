@@ -578,6 +578,8 @@ return {
 			k_coop_mirror_msg = "Mirror!",
 			k_coop_torch_got = "Torch: +1 hand",
 			k_coop_new_13 = "4 more co-op card enhancements: Mirror, Beacon, Twin, Torch, and The Forge Tarot that makes them.",
+			k_coop_fx_team = "Together!",
+			k_coop_fx_team_big = "Perfect pair!",
 			k_coop_steam_lobby = 'Steam lobby',
 			k_coop_steam_friends = 'Friends running Balatro',
 			k_coop_steam_no_friends = 'No friends are playing Balatro right now',

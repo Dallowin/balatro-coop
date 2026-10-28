@@ -32,6 +32,17 @@ local function coop_pool()
 	return COOP.is_active()
 end
 
+-- an effect (ui/fx.lua) queued with the scoring, so it plays in step with it
+local function fx(fn)
+	G.E_MANAGER:add_event(Event({
+		func = function()
+			pcall(fn, COOP.FX)
+			return true
+		end,
+	}))
+end
+CC.fx = fx
+
 local BULWARK_X = 1.2
 
 -- What the partner has, from their last snapshot (ui/partner_view.lua):
@@ -113,6 +124,13 @@ for _, key in ipairs({ 'yin', 'yang' }) do
 		calculate = function(self, card, context)
 			if context.joker_main then
 				if CC.paired(card) then
+					fx(function(F)
+						local half = function()
+							return F.partner_card('j_coop_' .. CC.PAIRS[key])
+						end
+						F.beam(card, half, key == 'yin' and G.C.WHITE or F.PARTNER, 0.5)
+						F.comet(half, card, { G.C.WHITE, G.C.BLACK, F.PARTNER }, { arc = 1.2, sound = 'multhit1', pitch = 1.2 })
+					end)
 					return { mult = card.ability.extra.mult, xmult = card.ability.extra.xmult }
 				end
 				return { mult = card.ability.extra.mult }
@@ -153,6 +171,13 @@ pair_joker('sword', {
 	end,
 	calculate = function(self, card, context)
 		if context.joker_main then
+			if CC.paired(card) then
+				fx(function(F)
+					local shield = F.partner_card('j_coop_shield')
+					F.beam(shield, card, G.C.WHITE, 0.45, { jitter = 0.15 })
+					F.comet(shield, card, { G.C.WHITE, G.C.GREY, F.PARTNER }, { sound = 'slice1', pitch = 1.1, arc = -0.6, time = 0.35 })
+				end)
+			end
 			return { xmult = CC.paired(card) and card.ability.extra.paired_xmult or card.ability.extra.xmult }
 		end
 	end,
@@ -172,6 +197,9 @@ pair_joker('shield', {
 			ease_discard(card.ability.extra.discards)
 			if CC.paired(card) then
 				ease_hands_played(card.ability.extra.hands)
+				fx(function(F)
+					F.comet(F.partner_jokers(), card, { G.C.BLUE, F.PARTNER, G.C.WHITE })
+				end)
 			end
 			return { message = localize('k_coop_shield_up'), colour = G.C.BLUE }
 		end
@@ -281,9 +309,14 @@ SMODS.Consumable({
 		local idx = CC.swap_pick and CC.swap_pick <= n and CC.swap_pick or n
 		CC.swap_pick = nil
 		COOP.send('swap', { key = mine.config.center.key, edition = mine.edition and mine.edition.key or '', idx = idx })
+		fx(function(F)
+			F.comet(mine, F.partner_jokers, { G.C.SECONDARY_SET.Spectral, G.C.WHITE }, { time = 0.8 })
+		end)
 		G.E_MANAGER:add_event(Event({
 			func = function()
-				mine:start_dissolve({ G.C.SECONDARY_SET.Spectral }, nil, 1.2)
+				COOP.FX.swap_out(mine)
+				COOP.FX.swap_out(mine)
+		mine:start_dissolve({ G.C.SECONDARY_SET.Spectral }, nil, 1.2)
 				return true
 			end,
 		}))
@@ -297,6 +330,9 @@ local function add_joker(key, edition)
 	local card = SMODS.add_card({ key = key, area = G.jokers, edition = edition ~= '' and edition or nil })
 	if card then
 		card:juice_up(0.4, 0.4)
+		pcall(function()
+			COOP.FX.swap_in(card)
+		end)
 	end
 end
 
@@ -335,6 +371,10 @@ SMODS.Seal({
 	calculate = function(self, card, context)
 		if context.main_scoring and context.cardarea == G.play and COOP.is_active() then
 			COOP.send('bond_draw', { n = 1 })
+			fx(function(F)
+				F.beam(card, F.partner_hand, F.TEAL, 0.4, { sound = false })
+				F.comet(card, F.partner_hand, { F.TEAL, G.C.WHITE })
+			end)
 			return { message = localize('k_coop_bond_msg'), colour = HEX('2FB8A8') }
 		end
 	end,
@@ -355,6 +395,9 @@ SMODS.Seal({
 			end
 			card.coop_sacrificed = G.TIMERS.REAL
 			COOP.send('sacrifice', { n = 1 })
+			pcall(function()
+				COOP.FX.comet(card, COOP.FX.partner_hand, { G.C.RED, G.C.GREY }, { sound = 'cancel', pitch = 1.2 })
+			end)
 			return { message = localize('k_coop_sacrifice_msg'), colour = G.C.UI.TEXT_INACTIVE }
 		end
 	end,
@@ -381,6 +424,9 @@ function CC.on_sacrifice(n)
 	if G.GAME and G.GAME.blind and G.GAME.blind.in_blind then
 		ease_discard(n or 1)
 		COOP.popup(localize('k_coop_sacrifice_got'), G.C.RED)
+		pcall(function()
+			COOP.FX.comet(COOP.FX.partner_hand(), G.deck, { G.C.RED, G.C.GREY })
+		end)
 	end
 end
 
@@ -401,6 +447,9 @@ function CC.update()
 	CC.pending_draws = 0
 	G.FUNCS.draw_from_deck_to_hand(n)
 	COOP.popup(localize('k_coop_bond_got'), HEX('2FB8A8'))
+	pcall(function()
+		COOP.FX.comet(COOP.FX.partner_hand(), G.hand, { COOP.FX.TEAL, G.C.WHITE })
+	end)
 end
 
 -- Bulwark cards in the partner's hand back up every hand we play.
@@ -451,6 +500,9 @@ SMODS.Enhancement({
 			local n = card:get_chip_bonus()
 			if n > 0 then
 				COOP.send('mirror_chips', { n = n })
+				fx(function(F)
+					F.comet(card, F.partner_hand, { G.C.CHIPS, G.C.WHITE })
+				end)
 				return { message = localize('k_coop_mirror_msg'), colour = G.C.CHIPS }
 			end
 		end
@@ -468,7 +520,13 @@ SMODS.Enhancement({
 	end,
 	calculate = function(self, card, context)
 		if scored(card, context) then
-			return { mult = BEACON_MULT * (1 + partner_hand_count('m_coop_beacon')) }
+			local n = partner_hand_count('m_coop_beacon')
+			if n > 0 then
+				fx(function(F)
+					F.comet(F.partner_hand(), card, F.GOLD, { sound = 'gold_seal', pitch = 1.2 })
+				end)
+			end
+			return { mult = BEACON_MULT * (1 + n) }
 		end
 	end,
 })
@@ -485,6 +543,9 @@ SMODS.Enhancement({
 		if scored(card, context) then
 			local pp = COOP.SYN and COOP.SYN.partner_play
 			if pp and pp.ranks and pp.ranks[card.base.value] then
+				fx(function(F)
+					F.comet(F.partner_hand(), card, { F.PARTNER, G.C.WHITE }, { arc = 1 })
+				end)
 				return { xmult = TWIN_X }
 			end
 		end
@@ -507,6 +568,7 @@ SMODS.Enhancement({
 		if context.destroy_card == card and context.cardarea == G.play and COOP.is_active()
 			and pseudorandom('coop_torch') < (G.GAME.probabilities.normal or 1) / TORCH_ODDS then
 			COOP.send('torch', { n = 1 })
+			COOP.FX.burn(card) -- dissolves in fire
 			return { remove = true }
 		end
 	end,
@@ -514,12 +576,18 @@ SMODS.Enhancement({
 
 function CC.on_mirror_chips(n)
 	CC.pending_chips = CC.pending_chips + math.max(0, n or 0)
+	pcall(function()
+		COOP.FX.comet(COOP.FX.partner_hand(), G.deck, { G.C.CHIPS, G.C.WHITE })
+	end)
 end
 
 function CC.on_torch(n)
 	if G.GAME and G.GAME.blind and G.GAME.blind.in_blind then
 		ease_hands_played(n or 1)
 		COOP.popup(localize('k_coop_torch_got'), G.C.ORANGE)
+		pcall(function()
+			COOP.FX.comet(COOP.FX.partner_hand(), G.deck, COOP.FX.FIRE, { time = 0.7 })
+		end)
 	end
 end
 
@@ -711,6 +779,10 @@ COOP.calculate = function(self, context)
 		local c = CC.pending_chips
 		CC.pending_chips = 0
 		if m > 0 or x or c > 0 then
+			fx(function(F)
+				local cols = x and { G.C.GREY, G.C.WHITE } or c > 0 and { G.C.CHIPS, G.C.WHITE } or { F.PARTNER, G.C.MULT }
+				F.comet(F.partner_hand(), G.play, cols)
+			end)
 			return { chips = c > 0 and c or nil, mult = m > 0 and m or nil, xmult = x,
 				message = localize(x and 'k_coop_bulwark_msg' or c > 0 and 'k_coop_mirror_msg' or 'k_coop_union_msg') }
 		end
@@ -746,6 +818,10 @@ SMODS.Edition({
 	end,
 	calculate = function(self, card, context)
 		if context.pre_joker or (context.main_scoring and context.cardarea == G.play) then
+			fx(function(F)
+				F.burst(card, { G.C.RED, G.C.BLUE, G.C.WHITE }, { size = 0.9, speed = 3 })
+				F.beam(card, F.partner_hand, G.C.RED, 0.35, { jitter = 0.2, sound = false })
+			end)
 			return { mult = UNION_MULT }
 		end
 	end,
@@ -765,6 +841,9 @@ SMODS.Edition({
 	end,
 	calculate = function(self, card, context)
 		if context.post_joker or (context.main_scoring and context.cardarea == G.play) then
+			fx(function(F)
+				F.burst(card, { { 0.75, 0.85, 1, 0.6 }, G.C.WHITE }, { size = 1, speed = 1.5, lifespan = 0.9 })
+			end)
 			return { xmult = 1.3 }
 		end
 	end,

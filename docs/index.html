@@ -131,6 +131,12 @@ section h2 { font-size: clamp(30px, 4.5vw, 44px); margin: 4px 0 10px; text-align
 .shots figure { margin: 0; }
 .shots figcaption { color: var(--muted); font-size: 13px; margin-top: 8px; text-align: center; }
 @media (max-width: 860px) { .shots { grid-template-columns: 1fr; } }
+.frame video { display: block; width: 100%; height: auto; }
+.shotgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 18px; }
+.shotgrid figure { margin: 0; }
+.shotgrid figcaption { color: var(--muted); font-size: 13px; margin-top: 8px; text-align: center; }
+@media (max-width: 860px) { .shotgrid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .shotgrid { grid-template-columns: 1fr; } }
 
 .jgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; max-width: 900px; margin: 0 auto; }
 .jcard { background: rgba(0,0,0,.28); border-radius: 14px; padding: 16px 14px; text-align: center; border: 2px solid rgba(197,82,224,.25); }
@@ -438,23 +444,45 @@ html[lang="en"] [data-l="en"], html[lang="ru"] [data-l="ru"] { display: revert; 
 
 <section id="shots">
 	<div class="wrap">
-		<div class="kicker reveal"><span data-l="en">Screenshots</span><span data-l="ru">Скриншоты</span></div>
-		<h2 class="reveal"><span data-l="en">In the game</span><span data-l="ru">Как это выглядит в игре</span></h2>
+		<div class="kicker reveal"><span data-l="en">In action</span><span data-l="ru">В деле</span></div>
+		<h2 class="reveal"><span data-l="en">See it in the game</span><span data-l="ru">Как это выглядит в игре</span></h2>
 		<div class="shots reveal">
 			<figure>
-				<div class="frame"><img src="img/shots/board.webp" width="1280" height="719" loading="lazy" alt="The board with the partner's hand"></div>
-				<figcaption><span data-l="en">Your partner's hand and jokers right on your board</span><span data-l="ru">Рука и джокеры напарника прямо на твоём столе</span></figcaption>
+				<div class="frame"><video src="media/big-hands.mp4" poster="media/big-hands.webp" width="1920" height="1080" autoplay muted loop playsinline preload="metadata" aria-label="Late game: a big hand with both boards full of jokers"></video></div>
+				<figcaption><span data-l="en">Late game: both boards stacked with jokers, huge X Mult, and your partner's hand counts toward the same blind</span><span data-l="ru">Поздняя игра: у обоих полные ряды джокеров, огромные иксы, и рука напарника идёт в тот же блайнд</span></figcaption>
 			</figure>
 			<div class="stack">
 				<figure>
-					<div class="frame"><img src="img/shots/slots.webp" width="1280" height="719" loading="lazy" alt="Slots"></div>
-					<figcaption><span data-l="en">Slots</span><span data-l="ru">Слоты</span></figcaption>
+					<div class="frame"><video src="media/team-win.mp4" poster="media/team-win.webp" width="1920" height="1080" autoplay muted loop playsinline preload="metadata" aria-label="The team beats the blind"></video></div>
+					<figcaption><span data-l="en">The team beats the blind together</span><span data-l="ru">Команда вместе закрывает блайнд</span></figcaption>
 				</figure>
 				<figure>
-					<div class="frame"><img src="img/shots/blackjack.webp" width="1280" height="918" loading="lazy" alt="Blackjack"></div>
-					<figcaption><span data-l="en">Blackjack</span><span data-l="ru">Блэкджек</span></figcaption>
+					<div class="frame"><video src="media/partner-score.mp4" poster="media/partner-score.webp" width="1920" height="1080" autoplay muted loop playsinline preload="metadata" aria-label="The partner's score flying into the round score"></video></div>
+					<figcaption><span data-l="en">Your partner's hand flies straight into the team score</span><span data-l="ru">Рука напарника залетает прямо в общий счёт</span></figcaption>
 				</figure>
 			</div>
+		</div>
+		<div class="shotgrid reveal">
+				<figure>
+					<div class="frame"><img src="media/shared-board.webp" width="1920" height="1080" loading="lazy" alt="The partner's hand and jokers on your board"></div>
+					<figcaption><span data-l="en">Your partner's hand, jokers and turn, live on your board</span><span data-l="ru">Рука, джокеры и ход напарника вживую на твоём столе</span></figcaption>
+				</figure>
+				<figure>
+					<div class="frame"><img src="media/lobby.webp" width="1920" height="1080" loading="lazy" alt="The co-op lobby"></div>
+					<figcaption><span data-l="en">Co-op lobby: shared or separate deck, turns, difficulty, challenges</span><span data-l="ru">Кооп-лобби: общая или раздельная колода, ходы, сложность, испытания</span></figcaption>
+				</figure>
+				<figure>
+					<div class="frame"><img src="media/shop-offer.webp" width="1920" height="1080" loading="lazy" alt="Offering a joker to the partner in the shop"></div>
+					<figcaption><span data-l="en">One shared shop: ping a card to offer it to your partner</span><span data-l="ru">Одна общая лавка: пингани карту, чтобы предложить её напарнику</span></figcaption>
+				</figure>
+				<figure>
+					<div class="frame"><img src="media/chat-wheel.webp" width="1920" height="1080" loading="lazy" alt="A chat wheel phrase"></div>
+					<figcaption><span data-l="en">Chat wheel and pings: talk without typing</span><span data-l="ru">Колесо чата и пинги: общение без набора текста</span></figcaption>
+				</figure>
+				<figure>
+					<div class="frame"><img src="media/casino.webp" width="1920" height="1080" loading="lazy" alt="The casino in the shop"></div>
+					<figcaption><span data-l="en">A casino in the shop: slots and blackjack with the shared money</span><span data-l="ru">Казино в лавке: слоты и блэкджек на общие деньги</span></figcaption>
+				</figure>
 		</div>
 	</div>
 </section>

@@ -210,6 +210,13 @@ function SO.wheel_close()
 	play_sound('paper1', 1.1, 0.5)
 end
 
+-- a phrase said without the wheel (the dev autopilot)
+function SO.on_wheel_self(i)
+	if in_run() and allowed() then
+		show_phrase(G.hand, localize('k_coop_you'), i, G.C.UI.BACKGROUND_INACTIVE)
+	end
+end
+
 function SO.on_wheel(i)
 	if not in_run() or not localize('coop_w_' .. i) then
 		return

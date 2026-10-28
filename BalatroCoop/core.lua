@@ -66,6 +66,7 @@ load('domain/vouchers.lua')
 load('net/lobby.lua')
 load('net/steam.lua')
 load('net/steam_lobby.lua')
+load('net/dev.lua')
 load('ui/pages.lua')
 load('ui/partner_view.lua')
 load('ui/chat.lua')
@@ -73,6 +74,9 @@ load('ui/social.lua')
 load('ui/casino.lua')
 load('ui/status.lua')
 load('ui/menus.lua')
+load('ui/autopilot.lua')
+load('ui/devpanel.lua')
+load('ui/fx.lua')
 -- SMODS objects must be registered while mods load
 load('objects/jokers.lua')
 load('objects/team_jokers.lua')
@@ -204,6 +208,7 @@ local MESSAGES = {
 	bond_draw = { n = NUM },
 	sacrifice = { n = NUM },
 	mirror_chips = { n = NUM },
+	dev = { a = STR, k = STR },
 	torch = { n = NUM },
 }
 
@@ -402,7 +407,7 @@ end
 -- back to us as the partner's messages, held until our own hand has finished
 -- scoring so the "partner" replay doesn't overlap ours. Money and chat are not
 -- mirrored (they would double).
-local MIRROR_SKIP = { money = true, chat = true, hello = true, meta = true, ready = true, start = true }
+local MIRROR_SKIP = { money = true, chat = true, dev = true, hello = true, meta = true, ready = true, start = true }
 COOP.test_pending = {}
 
 function COOP.release_test_mirror()
@@ -445,6 +450,9 @@ end
 
 -- Lobby-level messages work outside a run too, so they skip the inbox.
 local IMMEDIATE = {
+	dev = function(p)
+		COOP.DEVPANEL.on_dev(p)
+	end,
 	chat = function(p)
 		COOP.CHAT.add(p.name, p.text)
 	end,
@@ -636,12 +644,18 @@ local function install()
 	COOP.VOUCHERS.install_hooks()
 	COOP.CHALLENGE.install_hooks()
 	COOP.HISTORY.install_hooks()
+	COOP.BOT.install()
+	COOP.DEVPANEL.install()
+	COOP.FX.install()
 
 	local game_update_ref = Game.update
 	function Game:update(dt)
 		game_update_ref(self, dt)
 		step('start run', start_pending_run)
 		step('pages', COOP.PAGES.update)
+		if COOP.DEV.on() then
+			step('dev', COOP.DEV.update)
+		end
 		step('steam', COOP.SL.update)
 		step('send', COOP.flush, dt)
 		if not COOP.is_active() then
@@ -662,6 +676,8 @@ local function install()
 		step('social', COOP.SOCIAL.update)
 		step('co-op cards', COOP.CARDS.update)
 		step('team panel', COOP.STATUS.update)
+		step('autopilot', COOP.BOT.update)
+		step('effects', COOP.FX.update)
 	end
 end
 install()

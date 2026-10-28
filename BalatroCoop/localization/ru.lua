@@ -579,6 +579,8 @@ return {
 			k_coop_mirror_msg = "Отражение!",
 			k_coop_torch_got = "Факел: +1 рука",
 			k_coop_new_13 = "Ещё 4 кооп-улучшения карт: Отражение, Маяк, Двойник, Факел — и таро Кузня, которое их делает.",
+			k_coop_fx_team = "Вместе!",
+			k_coop_fx_team_big = "Идеальная пара!",
 			k_coop_steam_lobby = 'Лобби через Steam',
 			k_coop_steam_friends = 'Друзья, у которых запущена Balatro',
 			k_coop_steam_no_friends = 'Сейчас никто из друзей не играет в Balatro',
