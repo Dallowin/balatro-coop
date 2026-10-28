@@ -83,10 +83,12 @@ nav .wrap { display: flex; align-items: center; gap: 18px; height: 58px; }
 .frame.hov { transition: transform .25s; }
 .frame.hov:hover { transform: rotate(0deg) translateY(-6px) scale(1.01); }
 
-.hero { padding: 56px 16px 30px; display: grid; grid-template-columns: 1.05fr 1fr; gap: 40px; align-items: center; }
+.hero { padding: 48px 16px 30px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.hero .buttons, .badges { justify-content: center; }
+.hero p.tag { margin-left: auto; margin-right: auto; }
 .hero h1 { font-size: clamp(46px, 7vw, 82px); line-height: 1; margin: 0 0 14px; text-shadow: 0 5px 0 var(--shadow); }
 .hero h1 span { color: var(--red); display: block; }
-.logo-h1 img { display: block; width: 100%; max-width: 520px; height: auto; filter: drop-shadow(0 8px 0 rgba(0,0,0,.35)); }
+.logo-h1 img { display: block; width: 100%; max-width: 640px; height: auto; margin: 0 auto; filter: drop-shadow(0 8px 0 rgba(0,0,0,.35)); }
 .hero p.tag { font-size: 20px; color: var(--muted); margin: 0 0 24px; max-width: 520px; }
 .hero .buttons { display: flex; gap: 12px; flex-wrap: wrap; }
 .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 22px; }
@@ -201,7 +203,6 @@ html[lang="en"] [data-l="en"], html[lang="ru"] [data-l="ru"] { display: revert; 
 			<span class="badge"><span data-l="en">free &amp; open source</span><span data-l="ru">бесплатно, открытый код</span></span>
 		</div>
 	</div>
-	<div class="frame tilt-r hov"><img src="img/art/hero.webp" width="1307" height="722" alt="Two jesters playing Balatro together"></div>
 </header>
 
 <section id="features">
