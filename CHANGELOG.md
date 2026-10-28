@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.12.1
+
+### New
+- **4 more co-op enhancements**, 5 in all, each with its own look: Bulwark (redrawn: held in hand, every partner hand X1.2), Mirror (its chips go to your partner's next hand), Beacon (+4 Mult, +4 more per Beacon in your partner's hand), Twin (X1.5 if your partner's last hand had this rank), Torch (X2; 1 in 4 burns out and gives your partner +1 hand).
+- **The Forge** Tarot: one card becomes a random co-op enhancement.
+- **New editions with their own shaders**: Union shimmers in both players' colours (+8 Mult for you and your partner), Ether is a see-through ghost card (X1.3).
+
+### Fixed
+- The "What's new" window and long rule lines no longer run off the screen: lines wrap, and What's new comes in pages.
+- Chat wheel opens around the mouse; the phrase under (or towards) the mouse is picked.
+
 ## 0.12.0
 
 ### Changed

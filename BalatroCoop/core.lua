@@ -18,6 +18,26 @@ COOP.truncate = function(s, max)
 	return table.concat(chars, '', 1, max - 3) .. '...'
 end
 
+-- Split text into lines of at most max characters, at spaces (UI text
+-- doesn't wrap by itself).
+function COOP.wrap(s, max)
+	local lines, line, len = {}, '', 0
+	for word in tostring(s or ''):gmatch('%S+') do
+		local wlen = #word:gsub('[\128-\191]', '') -- characters, not bytes
+		if len > 0 and len + 1 + wlen > max then
+			lines[#lines + 1] = line
+			line, len = word, wlen
+		else
+			line = len > 0 and (line .. ' ' .. word) or word
+			len = len + (len > 0 and 1 or 0) + wlen
+		end
+	end
+	if len > 0 then
+		lines[#lines + 1] = line
+	end
+	return lines
+end
+
 local function load(file)
 	local chunk, err = SMODS.load_file(file, COOP.id)
 	if not chunk then
@@ -183,6 +203,8 @@ local MESSAGES = {
 	swap_back = { key = STR, edition = STR },
 	bond_draw = { n = NUM },
 	sacrifice = { n = NUM },
+	mirror_chips = { n = NUM },
+	torch = { n = NUM },
 }
 
 local HANDLERS = {
@@ -197,6 +219,12 @@ local HANDLERS = {
 	end,
 	sacrifice = function(p)
 		COOP.CARDS.on_sacrifice(p.n)
+	end,
+	mirror_chips = function(p)
+		COOP.CARDS.on_mirror_chips(p.n)
+	end,
+	torch = function(p)
+		COOP.CARDS.on_torch(p.n)
 	end,
 	-- also in IMMEDIATE below; here for the solo test's mirror, which goes through the inbox
 	wheel = function(p)

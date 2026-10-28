@@ -20,7 +20,7 @@ A co-op mode for [Balatro](https://store.steampowered.com/app/2379780/Balatro/):
 - **Team jokers**: 3 shared slots and 9 rare team jokers with their own art (Pass, Bridge, Echo, Double Strike, Chain, Contrast, Shared Hand, Support, Second Wind).
 - **Optional rules**: resonance (the more evenly you both score in a blind, the bigger an XMult, up to X1.5, whatever your builds) and a 70% per-player share cap. Both off by default.
 - **Shared consumables**: tarots, planets and spectrals are one pool for both, with 4 slots.
-- **Pair jokers and co-op cards**: Yin & Yang, Sun & Moon, Sword & Shield (strong only when split between you), new Tarots, the Swap spectral, Bond and Sacrifice seals, Bulwark cards, all from the Co-op Pack.
+- **Pair jokers and co-op cards**: Yin & Yang, Sun & Moon, Sword & Shield (strong only when split between you), new Tarots, the Swap spectral, Bond and Sacrifice seals, five co-op enhancements (Bulwark, Mirror, Beacon, Twin, Torch), Union and Ether editions with their own shaders, all from the Co-op Pack.
 - **Talk without typing**: a Dota-style chat wheel (hold Y), card pings (middle mouse / G) and an Offer button in the shop.
 - **Daily run, challenges, co-op bosses and team decks**: one seed a day for every pair, five challenges, four bosses that hit teamwork, two decks made for two.
 - **Run history** with a copyable result to share.

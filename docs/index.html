@@ -213,13 +213,23 @@ html[lang="en"] [data-l="en"], html[lang="ru"] [data-l="ru"] { display: revert; 
 
 <section id="new">
 	<div class="wrap">
-		<div class="kicker reveal"><span data-l="en">Version 0.12</span><span data-l="ru">Версия 0.12</span></div>
+		<div class="kicker reveal"><span data-l="en">Version 0.12.1</span><span data-l="ru">Версия 0.12.1</span></div>
 		<h2 class="reveal"><span data-l="en">What's new</span><span data-l="ru">Что нового</span></h2>
 		<p class="lead reveal">
 			<span data-l="en">In the game: the "What's new" button in the co-op menu. Everything else: the <a href="https://github.com/Dallowin/balatro-coop/blob/main/CHANGELOG.md">changelog</a>.</span>
 			<span data-l="ru">В игре — кнопка «Что нового» в меню коопа. Полный список — в <a href="https://github.com/Dallowin/balatro-coop/blob/main/CHANGELOG.md">журнале изменений</a>.</span>
 		</p>
 		<div class="newgrid">
+			<div class="tile reveal" style="--c: var(--gold)">
+				<h3><span data-l="en">Co-op enhancements</span><span data-l="ru">Кооп-улучшения</span></h3>
+				<p data-l="en">Bulwark, Mirror, Beacon, Twin and Torch: card upgrades that work for your partner, plus The Forge Tarot.</p>
+				<p data-l="ru">Оплот, Отражение, Маяк, Двойник и Факел — улучшения карт, которые работают на напарника, и таро «Кузня».</p>
+			</div>
+			<div class="tile reveal" style="--c: var(--purple)">
+				<h3><span data-l="en">New editions</span><span data-l="ru">Новые издания</span></h3>
+				<p data-l="en">Union shimmers in both players' colours, Ether is a see-through ghost card. Their own shaders.</p>
+				<p data-l="ru">«Союз» переливается цветами двух игроков, «Эфир» — полупрозрачная карта-призрак. Свои шейдеры.</p>
+			</div>
 			<div class="tile reveal" style="--c: var(--purple)">
 				<h3><span data-l="en">Pair jokers</span><span data-l="ru">Парные джокеры</span></h3>
 				<p data-l="en">Yin &amp; Yang, Sun &amp; Moon, Sword &amp; Shield: strong only when split between you two.</p>
@@ -467,6 +477,12 @@ html[lang="en"] [data-l="en"], html[lang="ru"] [data-l="ru"] { display: revert; 
 			<div class="jcard reveal"><img src="img/cards/twins.png" width="142" height="190" alt="The Twins" loading="lazy"><h3><span data-l="en">The Twins</span><span data-l="ru">Близнецы</span></h3><p data-l="en">Creates the other half of your partner's pair joker.</p><p data-l="ru">Создаёт вторую половинку к парному джокеру напарника.</p></div>
 			<div class="jcard reveal"><img src="img/cards/swap.png" width="142" height="190" alt="Swap" loading="lazy"><h3><span data-l="en">Swap</span><span data-l="ru">Обмен</span></h3><p data-l="en">Spectral: trade one of your jokers for one of your partner's.</p><p data-l="ru">Спектральная: меняет твоего джокера на джокера напарника.</p></div>
 			<div class="jcard reveal"><img src="img/cards/pack.png" width="142" height="190" alt="Co-op Pack" loading="lazy"><h3><span data-l="en">Co-op Pack</span><span data-l="ru">Кооп-пак</span></h3><p data-l="en">Pair jokers, co-op Tarots and Swap. Choose 1 of 3, or 2 of 5 in the Mega pack.</p><p data-l="ru">Парные джокеры, кооп-таро и «Обмен». 1 из 3, в Мега — 2 из 5.</p></div>
+			<div class="jcard reveal"><img src="img/cards/bulwark.png" width="142" height="190" alt="Bulwark" loading="lazy"><h3><span data-l="en">Bulwark</span><span data-l="ru">Оплот</span></h3><p data-l="en">Held in your hand: every partner hand gets X1.2 Mult.</p><p data-l="ru">Пока в руке: каждая рука напарника ×1.2.</p></div>
+			<div class="jcard reveal"><img src="img/cards/mirror.png" width="142" height="190" alt="Mirror" loading="lazy"><h3><span data-l="en">Mirror</span><span data-l="ru">Отражение</span></h3><p data-l="en">When scored, its chips go to your partner's next hand.</p><p data-l="ru">Засчитана — её фишки уходят в следующую руку напарника.</p></div>
+			<div class="jcard reveal"><img src="img/cards/beacon.png" width="142" height="190" alt="Beacon" loading="lazy"><h3><span data-l="en">Beacon</span><span data-l="ru">Маяк</span></h3><p data-l="en">+4 Mult, +4 more for each Beacon in your partner's hand.</p><p data-l="ru">+4 Множ. и ещё +4 за каждый Маяк в руке напарника.</p></div>
+			<div class="jcard reveal"><img src="img/cards/twin.png" width="142" height="190" alt="Twin" loading="lazy"><h3><span data-l="en">Twin</span><span data-l="ru">Двойник</span></h3><p data-l="en">X1.5 Mult if your partner's last hand had this rank.</p><p data-l="ru">×1.5, если в последней руке напарника был этот ранг.</p></div>
+			<div class="jcard reveal"><img src="img/cards/torch.png" width="142" height="190" alt="Torch" loading="lazy"><h3><span data-l="en">Torch</span><span data-l="ru">Факел</span></h3><p data-l="en">X2 Mult. 1 in 4 burns out, and your partner gets +1 hand.</p><p data-l="ru">×2. С шансом 1 из 4 сгорает — напарнику +1 рука.</p></div>
+			<div class="jcard reveal"><img src="img/cards/forge.png" width="142" height="190" alt="The Forge" loading="lazy"><h3><span data-l="en">The Forge</span><span data-l="ru">Кузня</span></h3><p data-l="en">Turns a card into a random co-op enhancement.</p><p data-l="ru">Превращает карту в случайное кооп-улучшение.</p></div>
 		</div>
 	</div>
 </section>

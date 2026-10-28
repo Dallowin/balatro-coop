@@ -9,12 +9,16 @@
 --                 rightmost)
 --   Seals         Bond: played -> the partner draws a card;
 --                 Sacrifice: discarded -> the partner gets +1 discard
---   Bulwark       enhancement: while it's held in your hand, the partner's
---                 hands get X1.2 Mult (each)
+--   Enhancements  Bulwark: while it's held in your hand, the partner's
+--                 hands get X1.2 Mult (each); Mirror, Beacon, Twin, Torch below
+--   The Forge     tarot: one card becomes a random co-op enhancement
 --   Tarots        The Bond, The Offering, The Fortress put those on cards
 --                 (yours or, as usual, the partner's); The Twins makes the
 --                 other half of a pair joker the partner holds
 --   Co-op Pack    booster with all of the above (normal 1 of 3, mega 2 of 5)
+--   Editions      Union (both players' colours; +Mult for you and the
+--                 partner) and Ether (see-through ghost; XMult), with their
+--                 own shaders in assets/shaders
 
 COOP.CARDS = COOP.CARDS or {}
 local CC = COOP.CARDS
@@ -410,6 +414,115 @@ function CC.bulwark_xmult()
 	return n > 0 and BULWARK_X ^ n or nil
 end
 
+
+-- More co-op enhancements (atlas coop_enhancers, cells 3..6):
+--   Mirror  scored -> the partner's next hand gets +Chips equal to its chips
+--   Beacon  scored -> +4 Mult, +4 more for each Beacon in the partner's hand
+--   Twin    scored -> X1.5 Mult if the partner's last hand had its rank
+--   Torch   scored -> X2 Mult; 1 in 4 burns out, and then the partner gets
+--           +1 hand this blind
+local BEACON_MULT = 4
+local TWIN_X = 1.5
+local TORCH_X, TORCH_ODDS = 2, 4
+
+CC.pending_chips = 0
+
+local function partner_hand_count(center_key)
+	local n = 0
+	for _, p in ipairs(partner_codes('hand')) do
+		if p[3] == center_key then
+			n = n + 1
+		end
+	end
+	return n
+end
+
+local function scored(card, context)
+	return context.main_scoring and context.cardarea == G.play and COOP.is_active()
+end
+
+SMODS.Enhancement({
+	key = 'mirror',
+	atlas = 'coop_enhancers',
+	pos = { x = 3, y = 0 },
+	in_pool = coop_pool,
+	calculate = function(self, card, context)
+		if scored(card, context) then
+			local n = card:get_chip_bonus()
+			if n > 0 then
+				COOP.send('mirror_chips', { n = n })
+				return { message = localize('k_coop_mirror_msg'), colour = G.C.CHIPS }
+			end
+		end
+	end,
+})
+
+SMODS.Enhancement({
+	key = 'beacon',
+	atlas = 'coop_enhancers',
+	pos = { x = 4, y = 0 },
+	in_pool = coop_pool,
+	loc_vars = function(self, info_queue, card)
+		local n = COOP.is_active() and partner_hand_count('m_coop_beacon') or 0
+		return { vars = { BEACON_MULT, BEACON_MULT * (n + 1) } }
+	end,
+	calculate = function(self, card, context)
+		if scored(card, context) then
+			return { mult = BEACON_MULT * (1 + partner_hand_count('m_coop_beacon')) }
+		end
+	end,
+})
+
+SMODS.Enhancement({
+	key = 'twin',
+	atlas = 'coop_enhancers',
+	pos = { x = 5, y = 0 },
+	in_pool = coop_pool,
+	loc_vars = function(self, info_queue, card)
+		return { vars = { TWIN_X } }
+	end,
+	calculate = function(self, card, context)
+		if scored(card, context) then
+			local pp = COOP.SYN and COOP.SYN.partner_play
+			if pp and pp.ranks and pp.ranks[card.base.value] then
+				return { xmult = TWIN_X }
+			end
+		end
+	end,
+})
+
+SMODS.Enhancement({
+	key = 'torch',
+	atlas = 'coop_enhancers',
+	pos = { x = 6, y = 0 },
+	in_pool = coop_pool,
+	config = { extra = { odds = TORCH_ODDS } },
+	loc_vars = function(self, info_queue, card)
+		return { vars = { TORCH_X, G.GAME and G.GAME.probabilities.normal or 1, TORCH_ODDS } }
+	end,
+	calculate = function(self, card, context)
+		if scored(card, context) then
+			return { xmult = TORCH_X }
+		end
+		if context.destroy_card == card and context.cardarea == G.play and COOP.is_active()
+			and pseudorandom('coop_torch') < (G.GAME.probabilities.normal or 1) / TORCH_ODDS then
+			COOP.send('torch', { n = 1 })
+			return { remove = true }
+		end
+	end,
+})
+
+function CC.on_mirror_chips(n)
+	CC.pending_chips = CC.pending_chips + math.max(0, n or 0)
+end
+
+function CC.on_torch(n)
+	if G.GAME and G.GAME.blind and G.GAME.blind.in_blind then
+		ease_hands_played(n or 1)
+		COOP.popup(localize('k_coop_torch_got'), G.C.ORANGE)
+	end
+end
+
 -- Tarots -----------------------------------------------------------------------------
 
 local function on_selected(card, max, apply)
@@ -493,6 +606,12 @@ end, function()
 	return G.P_SEALS.coop_sacrifice
 end)
 
+-- The Forge: one card becomes a random co-op enhancement
+local FORGE = { 'm_coop_bulwark', 'm_coop_mirror', 'm_coop_beacon', 'm_coop_twin', 'm_coop_torch' }
+card_tarot('forge', 5, 1, function(c)
+	c:set_ability(G.P_CENTERS[pseudorandom_element(FORGE, pseudoseed('coop_forge'))], nil, true)
+end)
+
 card_tarot('fortress', 2, 2, function(c)
 	c:set_ability(G.P_CENTERS.m_coop_bulwark, nil, true)
 end, function()
@@ -540,7 +659,7 @@ SMODS.Consumable({
 
 -- Co-op Pack -------------------------------------------------------------------------
 
-local TAROTS = { 'c_coop_bond', 'c_coop_offering', 'c_coop_fortress', 'c_coop_twins' }
+local TAROTS = { 'c_coop_bond', 'c_coop_offering', 'c_coop_fortress', 'c_coop_twins', 'c_coop_forge' }
 local JOKERS = { 'j_coop_yin', 'j_coop_yang', 'j_coop_sun', 'j_coop_moon', 'j_coop_sword', 'j_coop_shield' }
 
 local function pack_card(i)
@@ -585,9 +704,80 @@ pack('pack_mega', 1, 5, 2, 9, 0.25)
 
 COOP.calculate = function(self, context)
 	if context.joker_main and COOP.is_active() then
+		-- Union jokers of the partner, Bulwark cards in the partner's hand,
+		-- Mirror chips the partner sent
+		local m = CC.union_mult and CC.union_mult() or 0
 		local x = CC.bulwark_xmult()
-		if x then
-			return { xmult = x, message = localize('k_coop_bulwark_msg') }
+		local c = CC.pending_chips
+		CC.pending_chips = 0
+		if m > 0 or x or c > 0 then
+			return { chips = c > 0 and c or nil, mult = m > 0 and m or nil, xmult = x,
+				message = localize(x and 'k_coop_bulwark_msg' or c > 0 and 'k_coop_mirror_msg' or 'k_coop_union_msg') }
 		end
 	end
+end
+
+-- Editions ---------------------------------------------------------------------------
+--
+--   Union   shimmers in both players' colours; +8 Mult for you AND for every
+--           hand your partner plays
+--   Ether   a see-through ghost of a card; X1.3 Mult
+
+local UNION_MULT = 8
+
+SMODS.Shader({ key = 'kinship', path = 'kinship.fs' }) -- 'union' is a reserved word in GLSL
+SMODS.Shader({ key = 'ether', path = 'ether.fs' })
+
+local function coop_weight(self)
+	return COOP.is_active() and self.weight or 0
+end
+
+SMODS.Edition({
+	key = 'union',
+	shader = 'kinship',
+	config = { mult = UNION_MULT },
+	in_shop = true,
+	weight = 4,
+	extra_cost = 4,
+	get_weight = coop_weight,
+	sound = { sound = 'holo1', per = 1.3, vol = 0.5 },
+	loc_vars = function(self, info_queue, card)
+		return { vars = { UNION_MULT } }
+	end,
+	calculate = function(self, card, context)
+		if context.pre_joker or (context.main_scoring and context.cardarea == G.play) then
+			return { mult = UNION_MULT }
+		end
+	end,
+})
+
+SMODS.Edition({
+	key = 'ether',
+	shader = 'ether',
+	config = { x_mult = 1.3 },
+	in_shop = true,
+	weight = 3,
+	extra_cost = 5,
+	get_weight = coop_weight,
+	sound = { sound = 'negative', per = 1.6, vol = 0.4 },
+	loc_vars = function(self, info_queue, card)
+		return { vars = { 1.3 } }
+	end,
+	calculate = function(self, card, context)
+		if context.post_joker or (context.main_scoring and context.cardarea == G.play) then
+			return { xmult = 1.3 }
+		end
+	end,
+})
+
+-- Union cards the partner holds also boost our hands: their jokers count
+-- always, their playing cards only when they are played (that's theirs).
+function CC.union_mult()
+	local n = 0
+	for _, p in ipairs(partner_codes('jokers')) do
+		if p[4] == 'e_coop_union' then
+			n = n + 1
+		end
+	end
+	return n * UNION_MULT
 end

@@ -1,6 +1,30 @@
 return {
 	descriptions = {
+		Edition = {
+			e_coop_union = {
+				name = "Union",
+				text = {
+					"{C:mult}+#1#{} Mult for you",
+					"and every {C:attention}partner's{} hand",
+					"{C:inactive}(on a Joker)",
+				},
+			},
+			e_coop_ether = {
+				name = "Ether",
+				text = {
+					"{X:mult,C:white} X#1# {} Mult",
+				},
+			},
+		},
 		Tarot = {
+			c_coop_forge = {
+				name = "The Forge",
+				text = {
+					"Turns {C:attention}#1#{} selected",
+					"card into a random",
+					"{C:attention}co-op enhancement{}",
+				},
+			},
 			c_coop_bond = {
 				name = "The Bond",
 				text = {
@@ -45,6 +69,39 @@ return {
 			},
 		},
 		Enhanced = {
+			m_coop_mirror = {
+				name = "Mirror Card",
+				text = {
+					"When scored, your",
+					"{C:attention}partner's{} next hand",
+					"gets its {C:chips}Chips{}",
+				},
+			},
+			m_coop_beacon = {
+				name = "Beacon Card",
+				text = {
+					"{C:mult}+#1#{} Mult, and {C:mult}+#1#{} more",
+					"for each {C:attention}Beacon{}",
+					"in your partner's hand",
+					"{C:inactive}(Now {C:mult}+#2#{C:inactive})",
+				},
+			},
+			m_coop_twin = {
+				name = "Twin Card",
+				text = {
+					"{X:mult,C:white} X#1# {} Mult if your",
+					"{C:attention}partner's{} last hand had",
+					"a card of this rank",
+				},
+			},
+			m_coop_torch = {
+				name = "Torch Card",
+				text = {
+					"{X:mult,C:white} X#1# {} Mult",
+					"{C:green}#2# in #3#{} chance it burns out",
+					"and your {C:attention}partner{} gets {C:blue}+1{} hand",
+				},
+			},
 			m_coop_bulwark = {
 				name = "Bulwark",
 				text = {
@@ -318,6 +375,10 @@ return {
 	},
 	misc = {
 		labels = {
+			coop_union = "Union",
+			coop_ether = "Ether",
+			e_coop_union = "Union",
+			e_coop_ether = "Ether",
 			coop_bond_seal = "Bond Seal",
 			coop_sacrifice_seal = "Sacrifice Seal",
 			k_coop_team = 'Team',
@@ -446,6 +507,8 @@ return {
 			k_coop_rule_26 = "Swap: select your joker, click a joker in the partner's panel, use it: you trade.",
 			k_coop_rule_27 = "Bond: played, the partner draws a card. Sacrifice: discarded, the partner gets +1 discard.",
 			k_coop_rule_28 = "Bulwark: keep it in hand, every partner hand gets X1.2.",
+			k_coop_rule_29 = "Mirror: the card's chips go to your partner's next hand. Beacon: stronger for every Beacon in the partner's hand.",
+			k_coop_rule_30 = "Twin: X1.5 if the partner just played this rank. Torch: X2, may burn out and give the partner a hand.",
 			k_coop_rule_20 = 'Tarots, planets and spectrals are shared now: what one of you gets, both have.',
 			k_coop_rule_19 = 'Team decks: Siamese (same draws), Red & Black.',
 			k_coop_preview = 'Deck and challenge',
@@ -510,6 +573,11 @@ return {
 			k_coop_new_9 = "Pair jokers: Yin and Yang, Sun and Moon, Sword and Shield. Strong while the other half is your partner's.",
 			k_coop_new_10 = "New cards: Tarots The Bond, The Offering, The Fortress, The Twins and the Swap spectral (jokers with your partner).",
 			k_coop_new_11 = "Bond and Sacrifice seals, Bulwark cards. All from the new Co-op Pack in the shop.",
+			k_coop_union_msg = "Union!",
+			k_coop_new_12 = "New card editions with their own look: Union (shimmers in both players' colours, +Mult for you and your partner) and Ether (a see-through ghost card, X1.3).",
+			k_coop_mirror_msg = "Mirror!",
+			k_coop_torch_got = "Torch: +1 hand",
+			k_coop_new_13 = "4 more co-op card enhancements: Mirror, Beacon, Twin, Torch, and The Forge Tarot that makes them.",
 			k_coop_steam_lobby = 'Steam lobby',
 			k_coop_steam_friends = 'Friends running Balatro',
 			k_coop_steam_no_friends = 'No friends are playing Balatro right now',

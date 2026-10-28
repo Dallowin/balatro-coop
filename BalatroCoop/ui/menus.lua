@@ -133,7 +133,9 @@ local function show_rules(page)
 			w = 6, scale = 0.8, colour = G.C.RED }) }),
 	}
 	for _, line in ipairs(sections[page].lines) do
-		contents[#contents + 1] = row({ text(line, 0.32) }, 'cl', 0.03)
+		for j, part in ipairs(COOP.wrap(line, 70)) do
+			contents[#contents + 1] = row({ text((j > 1 and '  ' or '') .. part, 0.32) }, 'cl', j > 1 and 0 or 0.03)
+		end
 	end
 	G.FUNCS.overlay_menu({ definition = create_UIBox_generic_options({ snap_back = true, contents = contents }) })
 end
@@ -443,16 +445,44 @@ end
 
 local SEEN_FILE = 'coop_seen_version.txt'
 
-G.FUNCS.coop_whats_new = function()
+-- What's new comes in pages of a few items, each wrapped to fit the window
+local NEW_PER_PAGE = 4
+
+local function show_whats_new(page)
+	local items = {}
+	while G.localization.misc.dictionary['k_coop_new_' .. (#items + 1)] do
+		items[#items + 1] = G.localization.misc.dictionary['k_coop_new_' .. (#items + 1)]
+	end
+	local pages = math.max(1, math.ceil(#items / NEW_PER_PAGE))
+	page = math.max(1, math.min(page or 1, pages))
 	local contents = { row({ text(localize('k_coop_whats_new_title') .. ' ' .. tostring(COOP.version), 0.6, G.C.GOLD) }) }
-	local i = 1
-	while G.localization.misc.dictionary['k_coop_new_' .. i] do
-		contents[#contents + 1] = row({ text(G.localization.misc.dictionary['k_coop_new_' .. i], 0.32) }, 'cl', 0.03)
-		i = i + 1
+	if pages > 1 then
+		local labels = {}
+		for i = 1, pages do
+			labels[i] = i .. ' / ' .. pages
+		end
+		contents[#contents + 1] = row({ create_option_cycle({ options = labels, current_option = page, opt_callback = 'coop_whats_new_page',
+			w = 3, scale = 0.7, colour = G.C.PURPLE, no_pips = true }) })
+	end
+	for i = (page - 1) * NEW_PER_PAGE + 1, math.min(#items, page * NEW_PER_PAGE) do
+		local lines = COOP.wrap(items[i], 62)
+		local nodes = {}
+		for j, line in ipairs(lines) do
+			nodes[#nodes + 1] = row({ text((j == 1 and '- ' or '  ') .. line, 0.34) }, 'cl', 0.01)
+		end
+		contents[#contents + 1] = row({ col(nodes, { align = 'cl', padding = 0.05, minw = 11 }) }, 'cl', 0)
 	end
 	contents[#contents + 1] = row({ text(localize('k_coop_whats_new_more'), 0.28, G.C.UI.TEXT_LIGHT) }, 'cm', 0.08)
 	G.FUNCS.overlay_menu({ definition = create_UIBox_generic_options({ contents = contents }) })
+end
+
+G.FUNCS.coop_whats_new = function()
+	show_whats_new(1)
 	pcall(love.filesystem.write, SEEN_FILE, tostring(COOP.version))
+end
+
+G.FUNCS.coop_whats_new_page = function(args)
+	show_whats_new(args.to_key)
 end
 
 function COOP.maybe_show_whats_new()
