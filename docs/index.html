@@ -10,170 +10,249 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://dallowin.github.io/balatro-coop/">
 <meta property="og:image" content="https://dallowin.github.io/balatro-coop/img/logo.webp">
+<meta name="theme-color" content="#0f2a26">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='5' width='15' height='22' rx='3' fill='%23fe5f55' transform='rotate(-10 10 16)'/%3E%3Crect x='14' y='5' width='15' height='22' rx='3' fill='%23009dff' transform='rotate(10 22 16)'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
+/* ---------- tokens ---------- */
 :root {
-	--bg: #1b2a2b;
-	--panel: #33403f;
-	--panel2: #263231;
-	--ink: #f3f1ea;
-	--muted: #a7b6b3;
-	--red: #fe5f55;
-	--blue: #009dff;
-	--gold: #f5b143;
-	--green: #4bc292;
-	--purple: #c552e0;
-	--shadow: rgba(0, 0, 0, .38);
+	--bg: #0f2a26;
+	--ink: #f4f1e8;
+	--muted: #a9bdb8;
+	--red: #fe5f55;   --red-d: #b23d35;
+	--blue: #009dff;  --blue-d: #00609e;
+	--gold: #fda200;  --gold-d: #9a6200;
+	--green: #4bc292; --green-d: #2a7a5a;
+	--panel: rgba(10, 26, 24, .78);
+	--panel-2: rgba(255, 255, 255, .05);
+	--line: rgba(255, 255, 255, .09);
+	--shadow: rgba(0, 0, 0, .42);
+	--r: 14px;
+	--gap: 20px;
+	--sec: 88px;
+	--pixel: 'Pixelify Sans', monospace;
 }
+@media (max-width: 720px) { :root { --gap: 14px; --sec: 60px; } }
+
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-body { margin: 0; color: var(--ink); font: 16px/1.6 Inter, system-ui, sans-serif; background: var(--bg); overflow-x: hidden; }
-/* swirling felt like the game's background */
+html { scroll-behavior: smooth; scroll-padding-top: 76px; }
+@media (max-width: 980px) { html { scroll-padding-top: 108px; } }
+body { margin: 0; color: var(--ink); font: 16px/1.6 Inter, system-ui, sans-serif; background: var(--bg); overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+img, video { max-width: 100%; }
+a { color: var(--blue); }
+a:hover { color: #5cc0ff; }
+h1, h2, h3 { font-family: var(--pixel); letter-spacing: .02em; font-weight: 700; }
+.wrap { max-width: 1160px; margin: 0 auto; padding: 0 24px; }
+@media (max-width: 720px) { .wrap { padding: 0 16px; } }
+
+/* ---------- background: swirling felt + CRT ---------- */
 .bgfx {
 	position: fixed; inset: -20%; z-index: -2;
 	background:
-		radial-gradient(40% 35% at 20% 25%, #3c7a63 0%, transparent 70%),
-		radial-gradient(35% 30% at 80% 20%, #2f5f78 0%, transparent 70%),
-		radial-gradient(45% 40% at 70% 80%, #6a2f3a 0%, transparent 70%),
-		radial-gradient(40% 35% at 25% 85%, #3b5e47 0%, transparent 70%),
+		radial-gradient(40% 35% at 20% 25%, #2f7a5e 0%, transparent 70%),
+		radial-gradient(35% 30% at 80% 20%, #1b5d63 0%, transparent 70%),
+		radial-gradient(45% 40% at 72% 82%, #3e6f47 0%, transparent 70%),
+		radial-gradient(30% 28% at 18% 88%, #4a2a2c 0%, transparent 70%),
 		var(--bg);
 	animation: swirl 60s ease-in-out infinite alternate;
 	will-change: transform;
 }
-/* a slow drift; no blur filter (heavy on weak GPUs) */
 @keyframes swirl { to { transform: rotate(25deg) scale(1.08); } }
-/* CRT scanlines */
-.crt { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0,0,0,.14) 0 1px, transparent 1px 3px); }
+.crt {
+	position: fixed; inset: 0; z-index: -1; pointer-events: none;
+	background:
+		radial-gradient(120% 90% at 50% 40%, transparent 55%, rgba(0,0,0,.45) 100%),
+		repeating-linear-gradient(0deg, rgba(0,0,0,.13) 0 1px, transparent 1px 3px);
+}
 @media (prefers-reduced-motion: reduce) { .bgfx { animation: none; } }
 
-a { color: var(--blue); }
-h1, h2, h3 { font-family: 'Pixelify Sans', monospace; letter-spacing: .02em; }
-.wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
-
-nav { position: sticky; top: 0; z-index: 10; background: rgba(20, 30, 31, .82); backdrop-filter: blur(8px); border-bottom: 2px solid rgba(255,255,255,.06); }
-nav .wrap { display: flex; align-items: center; gap: 18px; height: 58px; }
-.logo { font-family: 'Pixelify Sans', monospace; font-weight: 700; font-size: 21px; color: var(--ink); text-decoration: none; white-space: nowrap; }
+/* ---------- nav ---------- */
+nav { position: sticky; top: 0; z-index: 10; background: rgba(9, 22, 20, .86); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-bottom: 2px solid var(--line); }
+nav .wrap { display: flex; align-items: center; gap: 20px; min-height: 60px; }
+.logo { font: 700 21px var(--pixel); color: var(--ink); text-decoration: none; white-space: nowrap; }
 .logo b { color: var(--red); }
-.links { display: flex; gap: 16px; flex: 1; }
-.links a { color: var(--muted); text-decoration: none; font-weight: 600; font-size: 14px; }
-.links a:hover { color: var(--ink); }
-.lang button { background: var(--panel2); color: var(--muted); border: 0; padding: 6px 10px; cursor: pointer; font: 600 13px Inter, sans-serif; border-radius: 6px; }
-.lang button.on { background: var(--panel); color: var(--ink); }
-@media (max-width: 820px) { .links { display: none; } nav .wrap { justify-content: space-between; } }
-
-.btn {
-	display: inline-flex; flex-direction: column; align-items: center; padding: 13px 26px; border-radius: 12px;
-	text-decoration: none; color: #fff; font: 700 20px 'Pixelify Sans', monospace;
-	box-shadow: 0 6px 0 var(--shadow); transition: transform .1s, box-shadow .1s;
+.logo:hover { color: var(--ink); }
+.links { display: flex; gap: 4px; flex: 1; justify-content: flex-end; }
+.links a { color: var(--muted); text-decoration: none; font-weight: 600; font-size: 14px; padding: 6px 10px; border-radius: 8px; white-space: nowrap; }
+.links a:hover { color: var(--ink); background: var(--panel-2); }
+.lang { display: flex; gap: 2px; background: rgba(0,0,0,.35); padding: 3px; border-radius: 9px; border: 2px solid var(--line); }
+.lang button { background: transparent; color: var(--muted); border: 0; padding: 4px 9px; cursor: pointer; font: 700 13px var(--pixel); border-radius: 6px; }
+.lang button.on { background: var(--red); color: #fff; }
+@media (max-width: 980px) {
+	nav .wrap { flex-wrap: wrap; gap: 0 12px; padding-top: 8px; }
+	.logo { flex: 1; }
+	.links { order: 3; flex: 0 0 100%; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; margin: 4px -8px 0; padding-bottom: 6px; }
+	.links::-webkit-scrollbar { display: none; }
 }
-.btn:hover { transform: translateY(-2px); box-shadow: 0 8px 0 var(--shadow); }
-.btn:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--shadow); }
-.btn small { font: 500 12px Inter, sans-serif; opacity: .85; }
-.btn.red { background: var(--red); }
-.btn.blue { background: var(--blue); }
 
-/* art framed like a card on the felt */
-.frame { border-radius: 16px; overflow: hidden; background: #111; border: 4px solid rgba(255,255,255,.9); box-shadow: 0 10px 0 var(--shadow), 0 0 0 6px rgba(0,0,0,.25); }
-.frame img { display: block; width: 100%; height: auto; }
-.tilt-l { transform: rotate(-1.6deg); }
-.tilt-r { transform: rotate(1.6deg); }
-.frame.hov { transition: transform .25s; }
-.frame.hov:hover { transform: rotate(0deg) translateY(-6px) scale(1.01); }
+/* ---------- buttons ---------- */
+.btn {
+	display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
+	padding: 12px 26px 11px; border-radius: 12px; min-width: 210px;
+	text-decoration: none; color: #fff; font: 700 22px/1.15 var(--pixel);
+	background: var(--c); box-shadow: 0 6px 0 var(--cd);
+	transition: transform .1s, box-shadow .1s;
+}
+.btn:hover { color: #fff; transform: translateY(-2px); box-shadow: 0 8px 0 var(--cd); }
+.btn:active { transform: translateY(5px); box-shadow: 0 1px 0 var(--cd); }
+.btn small { font: 600 12px/1.4 Inter, sans-serif; opacity: .9; margin-top: 3px; }
+.btn.red { --c: var(--red); --cd: var(--red-d); }
+.btn.blue { --c: var(--blue); --cd: var(--blue-d); }
+.btn.sm { min-width: 0; font-size: 18px; padding: 9px 20px; }
 
-.hero { padding: 48px 16px 30px; display: flex; flex-direction: column; align-items: center; text-align: center; }
-.hero .buttons, .badges { justify-content: center; }
-.hero p.tag { margin-left: auto; margin-right: auto; }
-.hero h1 { font-size: clamp(46px, 7vw, 82px); line-height: 1; margin: 0 0 14px; text-shadow: 0 5px 0 var(--shadow); }
-.hero h1 span { color: var(--red); display: block; }
-.logo-h1 img { display: block; width: 100%; max-width: 640px; height: auto; margin: 0 auto; filter: drop-shadow(0 8px 0 rgba(0,0,0,.35)); }
-.hero p.tag { font-size: 20px; color: var(--muted); margin: 0 0 24px; max-width: 520px; }
-.hero .buttons { display: flex; gap: 12px; flex-wrap: wrap; }
-.badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 22px; }
-.badge { background: rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,.12); border-radius: 999px; padding: 4px 12px; font-size: 13px; color: var(--muted); }
-.badge b { color: var(--ink); }
-@media (max-width: 860px) { .hero { grid-template-columns: 1fr; padding-top: 32px; } }
+/* ---------- shared building blocks ---------- */
+section { padding: var(--sec) 0; }
+.sec-head { text-align: center; max-width: 720px; margin: 0 auto 40px; }
+.kicker {
+	display: inline-block; font: 700 14px/1 var(--pixel); letter-spacing: .12em; text-transform: uppercase;
+	color: var(--gold); background: rgba(253, 162, 0, .1); border: 2px solid rgba(253, 162, 0, .4);
+	padding: 6px 14px; border-radius: 999px;
+}
+.sec-head h2 { font-size: clamp(32px, 4.6vw, 50px); line-height: 1.05; margin: 14px 0 12px; text-shadow: 0 4px 0 var(--shadow); }
+.lead { color: var(--muted); font-size: 17px; margin: 0; }
 
-section { padding: 54px 0; }
-.newgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-@media (max-width: 860px) { .newgrid { grid-template-columns: 1fr; } }
-.tile { background: rgba(0,0,0,.3); border-radius: 14px; padding: 18px; border-top: 4px solid var(--c, var(--blue)); box-shadow: 0 6px 0 var(--shadow); }
-.tile h3 { margin: 0 0 6px; font-size: 22px; }
+.panel { background: var(--panel); border: 2px solid var(--line); border-radius: var(--r); box-shadow: 0 6px 0 var(--shadow); }
+.acc { border-top: 4px solid var(--c, var(--blue)); }
+.c-red { --c: var(--red); } .c-blue { --c: var(--blue); } .c-gold { --c: var(--gold); } .c-green { --c: var(--green); }
+
+.grid { display: grid; gap: var(--gap); }
+.g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.g4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 980px) { .g3, .g4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .g2, .g3, .g4 { grid-template-columns: minmax(0, 1fr); } }
+
+.chip { display: inline-block; font: 700 13px/1.5 var(--pixel); padding: 1px 10px; border-radius: 6px; color: #fff; background: var(--c, var(--red)); box-shadow: 0 3px 0 rgba(0,0,0,.35); }
+
+/* media in a dark "screen" bezel */
+.media { margin: 0; }
+.bezel { background: #081513; padding: 6px; border-radius: var(--r); border: 2px solid var(--line); box-shadow: 0 6px 0 var(--shadow); }
+.bezel img, .bezel video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 8px; background: #000; }
+.media figcaption { color: var(--muted); font-size: 14px; line-height: 1.5; margin-top: 12px; padding: 0 4px; }
+
+/* ---------- hero ---------- */
+.hero { padding: 44px 0 calc(var(--sec) * .4); }
+.hero-grid {
+	display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 7fr); column-gap: 44px;
+	grid-template-rows: 1fr auto auto auto auto 1fr;
+	grid-template-areas: ". video" "logo video" "pitch video" "btns video" "facts video" ". video";
+}
+.hero h1 { grid-area: logo; margin: 0 0 18px; }
+.hero h1 img { display: block; width: 100%; max-width: 480px; height: auto; filter: drop-shadow(0 7px 0 rgba(0,0,0,.35)); }
+.pitch { grid-area: pitch; margin: 0 0 26px; }
+.pitch strong { display: block; font: 700 clamp(22px, 2.3vw, 28px)/1.25 var(--pixel); color: var(--ink); text-shadow: 0 3px 0 var(--shadow); }
+.pitch span.sub { display: block; color: var(--muted); font-size: 17px; margin-top: 8px; }
+.hero .buttons { grid-area: btns; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 500px; }
+.hero .buttons .btn { min-width: 0; padding-left: 14px; padding-right: 14px; }
+.hero .video { grid-area: video; align-self: center; }
+.facts-row { grid-area: facts; display: flex; gap: 8px; flex-wrap: wrap; margin-top: 26px; }
+.badge { background: rgba(0,0,0,.35); border: 2px solid var(--line); border-radius: 999px; padding: 3px 12px; font-size: 13px; color: var(--muted); }
+.badge b { color: var(--gold); font-family: var(--pixel); }
+@media (max-width: 980px) {
+	.hero { padding-top: 28px; }
+	.hero-grid { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "logo" "pitch" "btns" "video" "facts"; text-align: center; }
+	.hero h1 img { margin: 0 auto; max-width: 440px; }
+	.pitch { max-width: 560px; margin: 0 auto 24px; }
+	.hero .video { margin-top: 30px; }
+	.facts-row { margin-top: 22px; }
+	.hero .video figcaption { text-align: left; }
+	.hero .buttons { margin: 0 auto; width: 100%; }
+	.facts-row { justify-content: center; }
+}
+@media (max-width: 480px) { .hero .buttons { grid-template-columns: 1fr; } .hero h1 img { max-width: 300px; } .pitch .sub { font-size: 16px; } }
+
+/* ---------- feature cards (art on top) ---------- */
+.fgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.fcard { overflow: hidden; display: flex; flex-direction: column; }
+.fcard > img { display: block; width: 100%; height: auto; aspect-ratio: 960 / 710; object-fit: cover; border-bottom: 2px solid var(--line); }
+.fbody { padding: 18px 22px 22px; }
+.fbody h3 { font-size: 26px; line-height: 1.15; margin: 12px 0 8px; }
+.fbody p { color: var(--muted); margin: 0 0 12px; }
+.fbody ul { margin: 0; padding: 0; list-style: none; }
+.fbody li { padding: 4px 0 4px 24px; position: relative; font-size: 15px; }
+.fbody li::before { content: ''; position: absolute; left: 2px; top: 11px; width: 10px; height: 10px; border-radius: 2px; background: var(--c, var(--red)); box-shadow: 0 2px 0 rgba(0,0,0,.4); }
+.fcard.wide { grid-column: 1 / -1; flex-direction: row; align-items: center; }
+.fcard.wide > img { width: calc((100% - 2 * var(--gap)) / 3 + 2px); flex: none; border-bottom: 0; border-right: 2px solid var(--line); align-self: stretch; }
+.fcard.wide .fbody { flex: 1; padding: 22px 32px; }
+@media (max-width: 980px) {
+	.fgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	.fcard.wide > img { width: calc((100% - var(--gap)) / 2 + 2px); }
+}
+@media (max-width: 640px) {
+	.fgrid { grid-template-columns: minmax(0, 1fr); }
+	.fcard.wide { flex-direction: column; align-items: stretch; }
+	.fcard.wide > img { width: 100%; border-right: 0; border-bottom: 2px solid var(--line); }
+	.fcard.wide .fbody, .fbody { padding: 16px 20px 20px; }
+}
+
+/* ---------- small text tiles (what's new) ---------- */
+.tile { padding: 18px 20px 20px; }
+.tile h3 { margin: 0 0 6px; font-size: 21px; line-height: 1.2; }
 .tile p { margin: 0; color: var(--muted); font-size: 15px; }
-.kicker { font: 700 14px 'Pixelify Sans', monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--gold); text-align: center; }
-section h2 { font-size: clamp(30px, 4.5vw, 44px); margin: 4px 0 10px; text-align: center; text-shadow: 0 4px 0 var(--shadow); }
-.lead { text-align: center; color: var(--muted); max-width: 680px; margin: 0 auto 34px; font-size: 17px; }
+.note { text-align: center; color: var(--muted); font-size: 15px; margin: 28px auto 0; max-width: 720px; }
 
-.feature { display: grid; grid-template-columns: 1fr 1fr; gap: 44px; align-items: center; margin: 0 0 64px; }
-.feature.flip .art { order: 2; }
-.feature h3 { font-size: 30px; margin: 0 0 10px; }
-.feature p { color: var(--muted); margin: 0 0 12px; }
-.feature ul { margin: 0; padding: 0; list-style: none; }
-.feature li { padding: 6px 0 6px 30px; position: relative; }
-.feature li::before { content: ''; position: absolute; left: 4px; top: 12px; width: 12px; height: 12px; border-radius: 3px; background: var(--c, var(--red)); box-shadow: 0 2px 0 var(--shadow); }
-.chip { display: inline-block; font: 700 13px 'Pixelify Sans', monospace; padding: 2px 10px; border-radius: 6px; color: #fff; background: var(--c, var(--red)); box-shadow: 0 3px 0 var(--shadow); margin-bottom: 10px; }
-@media (max-width: 860px) { .feature { grid-template-columns: 1fr; gap: 22px; } .feature.flip .art { order: 0; } }
+/* ---------- game cards (co-op cards, team jokers) ---------- */
+.subhead { display: flex; align-items: center; gap: 14px; font: 700 20px var(--pixel); margin: 40px 0 18px; }
+.subhead:first-of-type { margin-top: 0; }
+.subhead::after { content: ''; flex: 1; height: 2px; background: var(--line); }
+.subhead .chip { font-size: 15px; }
+.cgrid { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; }
+.ccard { flex: 0 0 calc((100% - 5 * 16px) / 6); padding: 16px 12px 18px; text-align: center; transition: transform .15s; }
+.ccard img { image-rendering: pixelated; width: 142px; max-width: 100%; height: auto; aspect-ratio: 142 / 190; display: block; margin: 0 auto 10px; filter: drop-shadow(0 6px 0 rgba(0,0,0,.4)); transition: transform .15s; }
+.ccard:hover img { transform: translateY(-6px) rotate(-2deg); }
+.ccard h3 { margin: 0 0 4px; font-size: 19px; line-height: 1.2; }
+.ccard p { margin: 0; color: var(--muted); font-size: 13.5px; line-height: 1.45; }
+.jtag { display: inline-block; margin-top: 8px; font-size: 12px; color: var(--gold); border: 1px solid rgba(253,162,0,.5); border-radius: 6px; padding: 1px 7px; }
+@media (max-width: 980px) { .ccard { flex-basis: calc((100% - 2 * 16px) / 3); } }
+@media (max-width: 560px) { .cgrid { gap: 12px; } .ccard { flex-basis: calc((100% - 12px) / 2); padding: 14px 8px 16px; } .ccard img { width: 120px; } }
 
-.casino { background: linear-gradient(180deg, rgba(60, 20, 26, .55), rgba(30, 14, 18, .75)); border-top: 4px solid var(--gold); border-bottom: 4px solid var(--gold); }
-.games { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
-.game { background: rgba(0,0,0,.3); border-radius: 18px; padding: 18px; border: 2px solid rgba(245,177,67,.25); }
-.game h3 { font-size: 28px; margin: 14px 0 6px; color: var(--gold); }
-.game p { color: var(--muted); margin: 0 0 8px; }
-.facts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-.fact { background: var(--panel2); border-radius: 8px; padding: 5px 10px; font-size: 13px; }
-.fact b { color: var(--gold); }
-@media (max-width: 860px) { .games { grid-template-columns: 1fr; } }
+/* ---------- casino band ---------- */
+.casino { background: linear-gradient(180deg, rgba(70, 22, 26, .6), rgba(36, 12, 15, .78)); border-top: 4px solid var(--gold); border-bottom: 4px solid var(--gold); }
+.casino .fbody h3 { color: var(--gold); }
+.facts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.fact { background: rgba(0,0,0,.35); border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; font-size: 13px; }
+.fact b { color: var(--gold); font-family: var(--pixel); }
+.casino-shot { max-width: 820px; margin: 36px auto 0; }
+.casino-shot figcaption { text-align: center; }
 
-.shots { display: grid; grid-template-columns: 2fr 1fr; gap: 18px; }
-.shots .stack { display: grid; gap: 18px; }
-.shots figure { margin: 0; }
-.shots figcaption { color: var(--muted); font-size: 13px; margin-top: 8px; text-align: center; }
-@media (max-width: 860px) { .shots { grid-template-columns: 1fr; } }
-.frame video { display: block; width: 100%; height: auto; }
-.shotgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 18px; }
-.shotgrid figure { margin: 0; }
-.shotgrid figcaption { color: var(--muted); font-size: 13px; margin-top: 8px; text-align: center; }
-@media (max-width: 860px) { .shotgrid { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 560px) { .shotgrid { grid-template-columns: 1fr; } }
-
-.jgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; max-width: 900px; margin: 0 auto; }
-.jcard { background: rgba(0,0,0,.28); border-radius: 14px; padding: 16px 14px; text-align: center; border: 2px solid rgba(197,82,224,.25); }
-.jcard img { image-rendering: pixelated; width: 142px; height: 190px; display: block; margin: 0 auto 10px; transition: transform .15s; filter: drop-shadow(0 6px 0 rgba(0,0,0,.35)); }
-.jcard:hover img { transform: translateY(-6px) rotate(-2deg); }
-.jcard h3 { margin: 0 0 6px; font-size: 21px; color: #e7a6f5; }
-.jcard p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.45; }
-.jtag { display: inline-block; margin-top: 8px; font-size: 12px; color: var(--gold); border: 1px solid rgba(245,177,67,.5); border-radius: 6px; padding: 1px 7px; }
-@media (max-width: 680px) { .jgrid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 420px) { .jgrid { grid-template-columns: 1fr; } }
-
-.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
-@media (max-width: 860px) { .cols { grid-template-columns: 1fr; } }
-.card { background: rgba(0,0,0,.28); border-radius: 16px; padding: 22px; }
-.card h3 { margin: 0 0 14px; font-size: 24px; }
+/* ---------- install ---------- */
+.card { padding: 24px; }
+.card h3 { margin: 0 0 16px; font-size: 26px; }
 .steps { counter-reset: s; display: grid; gap: 10px; }
-.step { background: var(--panel2); border-radius: 12px; padding: 12px 16px 12px 60px; position: relative; }
-.step::before { counter-increment: s; content: counter(s); position: absolute; left: 14px; top: 12px; width: 32px; height: 32px; border-radius: 8px; background: var(--gold); color: #3a2a06; font: 700 19px 'Pixelify Sans', monospace; display: flex; align-items: center; justify-content: center; }
+.step { background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px 12px 60px; position: relative; min-height: 56px; }
+.step::before { counter-increment: s; content: counter(s); position: absolute; left: 14px; top: 12px; width: 32px; height: 32px; border-radius: 8px; background: var(--gold); color: #3a2400; font: 700 19px var(--pixel); display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 0 var(--gold-d); }
 .step p { margin: 0; color: var(--muted); }
 .step b { color: var(--ink); }
-code { background: #131c1d; padding: 2px 6px; border-radius: 5px; color: var(--gold); font-size: 14px; word-break: break-all; }
+code { background: #08151a; padding: 2px 6px; border-radius: 5px; color: var(--gold); font-size: 14px; overflow-wrap: anywhere; }
 .deps { display: grid; gap: 8px; margin-bottom: 16px; }
-.dep { display: flex; justify-content: space-between; gap: 10px; background: var(--panel2); border-radius: 10px; padding: 10px 14px; }
+.dep { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
 .dep span { font-weight: 600; }
+.dep a { font-weight: 600; font-size: 14px; }
+@media (max-width: 640px) { .card { padding: 18px 16px; } .step { padding: 10px 14px 10px 54px; } .step::before { left: 12px; top: 10px; } }
 
-details { background: rgba(0,0,0,.28); border-radius: 12px; padding: 14px 18px; margin: 0 auto 10px; max-width: 780px; }
-summary { cursor: pointer; font-weight: 700; }
-details p { color: var(--muted); margin: 8px 0 0; }
+/* ---------- FAQ ---------- */
+.faq { max-width: 820px; margin: 0 auto; display: grid; gap: 12px; }
+details { padding: 0; }
+summary { cursor: pointer; font-weight: 700; padding: 16px 52px 16px 20px; list-style: none; position: relative; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: '+'; position: absolute; right: 16px; top: 50%; transform: translateY(-50%); width: 26px; height: 26px; border-radius: 6px; background: var(--blue); color: #fff; font: 700 20px/26px var(--pixel); text-align: center; box-shadow: 0 3px 0 var(--blue-d); }
+details[open] summary::after { content: '−'; background: var(--red); box-shadow: 0 3px 0 var(--red-d); }
+details p { color: var(--muted); margin: 0; padding: 0 20px 18px; }
 
-footer { text-align: center; color: var(--muted); font-size: 14px; padding: 40px 0 56px; }
+/* ---------- footer ---------- */
+footer { background: rgba(0,0,0,.35); border-top: 2px solid var(--line); padding: 44px 0 52px; text-align: center; color: var(--muted); font-size: 14px; }
+footer .logo { font-size: 26px; display: inline-block; margin-bottom: 14px; }
+footer p { margin: 0 auto 18px; max-width: 680px; }
 
-[data-l] { display: none; }
-html[lang="en"] [data-l="en"], html[lang="ru"] [data-l="ru"] { display: revert; }
+/* ---------- language + reveal ---------- */
+/* only the other language is hidden, so each element keeps its own display */
+html[lang="en"] [data-l="ru"], html[lang="ru"] [data-l="en"] { display: none !important; }
 
 .reveal { opacity: 0; transform: translateY(18px); transition: opacity .6s, transform .6s; }
 .reveal.in { opacity: 1; transform: none; }
-@media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } }
 </style>
 </head>
 <body>
@@ -184,10 +263,12 @@ html[lang="en"] [data-l="en"], html[lang="ru"] [data-l="ru"] { display: revert; 
 	<div class="wrap">
 		<a class="logo" href="#">Balatro <b>Co-op</b></a>
 		<div class="links">
-			<a href="#new"><span data-l="en">What's new</span><span data-l="ru">Что нового</span></a>
+			<a href="#action"><span data-l="en">In action</span><span data-l="ru">В деле</span></a>
 			<a href="#features"><span data-l="en">Features</span><span data-l="ru">Фичи</span></a>
-			<a href="#casino"><span data-l="en">Casino</span><span data-l="ru">Казино</span></a>
+			<a href="#new"><span data-l="en">What's new</span><span data-l="ru">Что нового</span></a>
+			<a href="#cards"><span data-l="en">Co-op cards</span><span data-l="ru">Кооп-карты</span></a>
 			<a href="#jokers"><span data-l="en">Team jokers</span><span data-l="ru">Джокеры</span></a>
+			<a href="#casino"><span data-l="en">Casino</span><span data-l="ru">Казино</span></a>
 			<a href="#install"><span data-l="en">Install</span><span data-l="ru">Установка</span></a>
 			<a href="#faq">FAQ</a>
 			<a href="https://github.com/Dallowin/balatro-coop">GitHub</a>
@@ -196,18 +277,25 @@ html[lang="en"] [data-l="en"], html[lang="ru"] [data-l="ru"] { display: revert; 
 	</div>
 </nav>
 
-<header class="wrap hero">
-	<div>
-		<h1 class="logo-h1"><img src="img/logo.webp" width="900" height="492" alt="Balatro Co-op"></h1>
-		<p class="tag">
-			<span data-l="en">Two players, one run, one shared score against every blind. You win together and you lose together.</span>
-			<span data-l="ru">Двое игроков, один забег, общий счёт против каждого блайнда. Побеждаете вместе и проигрываете вместе.</span>
+<!-- ================= HERO ================= -->
+<header class="hero">
+	<div class="wrap hero-grid">
+		<h1><img src="img/logo.webp" width="900" height="492" alt="Balatro Co-op"></h1>
+		<p class="pitch">
+			<strong data-l="en">Two players, one run, one shared score against every blind.</strong>
+			<strong data-l="ru">Двое игроков, один забег, общий счёт против каждого блайнда.</strong>
+			<span class="sub" data-l="en">You win together and you lose together.</span>
+			<span class="sub" data-l="ru">Побеждаете вместе и проигрываете вместе.</span>
 		</p>
+		<figure class="media video">
+			<div class="bezel"><video src="media/big-hands.mp4" poster="media/big-hands.webp" width="1920" height="1080" autoplay muted loop playsinline preload="metadata" aria-label="Late game: a big hand with both boards full of jokers"></video></div>
+			<figcaption><span data-l="en">Late game: both boards stacked with jokers, huge X Mult, and your partner's hand counts toward the same blind</span><span data-l="ru">Поздняя игра: у обоих полные ряды джокеров, огромные иксы, и рука напарника идёт в тот же блайнд</span></figcaption>
+		</figure>
 		<div class="buttons">
-			<a class="btn red" href="https://github.com/Dallowin/balatro-coop/releases/latest"><span data-l="en">Download</span><span data-l="ru">Скачать</span><small id="ver">&nbsp;</small></a>
+			<a class="btn red" href="https://github.com/Dallowin/balatro-coop/releases/latest"><span data-l="en">Download</span><span data-l="ru">Скачать</span><small><span data-l="en">Latest release on GitHub</span><span data-l="ru">Последний релиз на GitHub</span><span id="ver"></span></small></a>
 			<a class="btn blue" href="#install"><span data-l="en">How to install</span><span data-l="ru">Как установить</span><small>Lovely · Steamodded</small></a>
 		</div>
-		<div class="badges">
+		<div class="facts-row">
 			<span class="badge"><b>2</b> <span data-l="en">players</span><span data-l="ru">игрока</span></span>
 			<span class="badge"><b>Steam</b> <span data-l="en">invites, no server</span><span data-l="ru">приглашения, без сервера</span></span>
 			<span class="badge"><b>9</b> <span data-l="en">team jokers</span><span data-l="ru">командных джокеров</span></span>
@@ -217,71 +305,230 @@ html[lang="en"] [data-l="en"], html[lang="ru"] [data-l="ru"] { display: revert; 
 	</div>
 </header>
 
+<!-- ================= IN ACTION ================= -->
+<section id="action">
+	<div class="wrap">
+		<div class="sec-head reveal">
+			<span class="kicker"><span data-l="en">In action</span><span data-l="ru">В деле</span></span>
+			<h2><span data-l="en">See it in the game</span><span data-l="ru">Как это выглядит в игре</span></h2>
+		</div>
+		<div class="grid g3">
+			<figure class="media reveal">
+				<div class="bezel"><video src="media/team-win.mp4" poster="media/team-win.webp" width="1920" height="1080" muted loop playsinline preload="none" data-auto aria-label="The team beats the blind"></video></div>
+				<figcaption><span data-l="en">The team beats the blind together</span><span data-l="ru">Команда вместе закрывает блайнд</span></figcaption>
+			</figure>
+			<figure class="media reveal">
+				<div class="bezel"><video src="media/partner-score.mp4" poster="media/partner-score.webp" width="1920" height="1080" muted loop playsinline preload="none" data-auto aria-label="The partner's score flying into the round score"></video></div>
+				<figcaption><span data-l="en">Your partner's hand flies straight into the team score</span><span data-l="ru">Рука напарника залетает прямо в общий счёт</span></figcaption>
+			</figure>
+			<figure class="media reveal">
+				<div class="bezel"><img src="media/shared-board.webp" width="1920" height="1080" loading="lazy" alt="The partner's hand and jokers on your board"></div>
+				<figcaption><span data-l="en">Your partner's hand, jokers and turn, live on your board</span><span data-l="ru">Рука, джокеры и ход напарника вживую на твоём столе</span></figcaption>
+			</figure>
+			<figure class="media reveal">
+				<div class="bezel"><img src="media/lobby.webp" width="1920" height="1080" loading="lazy" alt="The co-op lobby"></div>
+				<figcaption><span data-l="en">Co-op lobby: shared or separate deck, turns, difficulty, challenges</span><span data-l="ru">Кооп-лобби: общая или раздельная колода, ходы, сложность, испытания</span></figcaption>
+			</figure>
+			<figure class="media reveal">
+				<div class="bezel"><img src="media/shop-offer.webp" width="1920" height="1080" loading="lazy" alt="Offering a joker to the partner in the shop"></div>
+				<figcaption><span data-l="en">One shared shop: ping a card to offer it to your partner</span><span data-l="ru">Одна общая лавка: пингани карту, чтобы предложить её напарнику</span></figcaption>
+			</figure>
+			<figure class="media reveal">
+				<div class="bezel"><img src="media/chat-wheel.webp" width="1920" height="1080" loading="lazy" alt="A chat wheel phrase"></div>
+				<figcaption><span data-l="en">Chat wheel and pings: talk without typing</span><span data-l="ru">Колесо чата и пинги: общение без набора текста</span></figcaption>
+			</figure>
+		</div>
+	</div>
+</section>
+
+<!-- ================= FEATURES ================= -->
+<section id="features">
+	<div class="wrap">
+		<div class="sec-head reveal">
+			<span class="kicker"><span data-l="en">What's inside</span><span data-l="ru">Что внутри</span></span>
+			<h2><span data-l="en">Built for two</span><span data-l="ru">Сделано для двоих</span></h2>
+			<p class="lead">
+				<span data-l="en">Everything in Balatro, now shared: the blind, the shop, the money and the deck. One player can't carry the run alone.</span>
+				<span data-l="ru">Всё как в Balatro, только общее: блайнд, лавка, деньги и колода. Один игрок забег не вытащит.</span>
+			</p>
+		</div>
+
+		<div class="grid fgrid">
+			<article class="panel fcard c-red reveal">
+				<img src="img/art/blind.webp" width="960" height="710" loading="lazy" alt="">
+				<div class="fbody">
+					<span class="chip"><span data-l="en">Core</span><span data-l="ru">Основа</span></span>
+					<h3><span data-l="en">One shared blind</span><span data-l="ru">Один общий блайнд</span></h3>
+					<p data-l="en">You take turns playing hands, and every chip you score lands in one shared pot.</p>
+					<p data-l="ru">Вы ходите руками по очереди, и все ваши фишки идут в один общий котёл.</p>
+					<ul>
+						<li><span data-l="en">The blind is scaled for two (difficulty in the lobby)</span><span data-l="ru">Блайнд усилен под двоих (сложность — в лобби)</span></li>
+						<li><span data-l="en">Alternating or simultaneous turns</span><span data-l="ru">Ходы по очереди или одновременно</span></li>
+						<li><span data-l="en">Lose only when both of you are out of hands</span><span data-l="ru">Проигрыш — только когда руки кончились у обоих</span></li>
+					</ul>
+				</div>
+			</article>
+
+			<article class="panel fcard c-blue reveal">
+				<img src="img/art/steam.webp" width="960" height="710" loading="lazy" alt="">
+				<div class="fbody">
+					<span class="chip">Steam</span>
+					<h3><span data-l="en">Invite any friend</span><span data-l="ru">Позови любого друга</span></h3>
+					<p data-l="en">No codes, no server. Steam connects you directly and handles the network for you.</p>
+					<p data-l="ru">Без кодов и сервера. Steam соединяет вас напрямую и сам разбирается с сетью.</p>
+					<ul>
+						<li><span data-l="en">The invite arrives in Steam chat, even if they aren't playing</span><span data-l="ru">Приглашение приходит в чат Steam, даже если друг не в игре</span></li>
+						<li><span data-l="en">One click: Balatro starts right into your lobby</span><span data-l="ru">Один клик — Balatro запускается сразу в твоё лобби</span></li>
+						<li><span data-l="en">Lobby codes through a server work too</span><span data-l="ru">Лобби по коду через сервер тоже работает</span></li>
+					</ul>
+				</div>
+			</article>
+
+			<article class="panel fcard c-gold reveal">
+				<img src="img/art/shop.webp" width="960" height="710" loading="lazy" alt="">
+				<div class="fbody">
+					<span class="chip"><span data-l="en">Economy</span><span data-l="ru">Экономика</span></span>
+					<h3><span data-l="en">Shared shop &amp; wallet</span><span data-l="ru">Общая лавка и кошелёк</span></h3>
+					<p data-l="en">One shop for both of you, one wallet, shared vouchers. Plan the build together.</p>
+					<p data-l="ru">Одна лавка на двоих, один кошелёк, общие ваучеры. Билд собираете вместе.</p>
+					<ul>
+						<li><span data-l="en">What one of you buys is gone for the other</span><span data-l="ru">Что купил один — пропадает у другого</span></li>
+						<li><span data-l="en">You leave the shop together</span><span data-l="ru">Из лавки выходите вместе</span></li>
+						<li><span data-l="en">Vouchers work for both (and cost a bit more)</span><span data-l="ru">Ваучеры работают на обоих (и чуть дороже)</span></li>
+					</ul>
+				</div>
+			</article>
+
+			<article class="panel fcard c-green reveal">
+				<img src="img/art/live.webp" width="960" height="710" loading="lazy" alt="">
+				<div class="fbody">
+					<span class="chip"><span data-l="en">Live</span><span data-l="ru">Вживую</span></span>
+					<h3><span data-l="en">Watch your partner score</span><span data-l="ru">Смотри, как считает напарник</span></h3>
+					<p data-l="en">Their hand and jokers sit above yours, and their chips × mult counts up in your HUD as it happens.</p>
+					<p data-l="ru">Его рука и джокеры над твоими, а его фишки × множ. накручиваются у тебя в HUD прямо во время подсчёта.</p>
+					<ul>
+						<li><span data-l="en">Their played cards fly onto your board</span><span data-l="ru">Его сыгранные карты вылетают к тебе на стол</span></li>
+						<li><span data-l="en">Hover their jokers to see their real values</span><span data-l="ru">Наведи на его джокеров — увидишь их реальные значения</span></li>
+						<li><span data-l="en">Use your tarots on their cards</span><span data-l="ru">Применяй свои таро на его карты</span></li>
+					</ul>
+				</div>
+			</article>
+
+			<article class="panel fcard c-red reveal">
+				<img src="img/art/team.webp" width="960" height="710" loading="lazy" alt="">
+				<div class="fbody">
+					<span class="chip"><span data-l="en">Rare</span><span data-l="ru">Редкие</span></span>
+					<h3><span data-l="en">Team jokers</span><span data-l="ru">Командные джокеры</span></h3>
+					<p data-l="en">Three shared slots and nine rare jokers with their own art that only make sense as a team.</p>
+					<p data-l="ru">Три общих слота и девять редких джокеров со своей графикой, которые работают только в команде.</p>
+					<ul>
+						<li><span data-l="en">Echo passes Mult from your partner's hand to yours</span><span data-l="ru">Эхо передаёт множитель руки напарника в твою</span></li>
+						<li><span data-l="en">Bridge copies your partner's joker</span><span data-l="ru">Мост копирует джокера напарника</span></li>
+						<li><a href="#jokers"><span data-l="en">See all nine</span><span data-l="ru">Все девять</span></a></li>
+					</ul>
+				</div>
+			</article>
+
+			<article class="panel fcard c-blue reveal">
+				<img src="img/art/deck.webp" width="960" height="710" loading="lazy" alt="">
+				<div class="fbody">
+					<span class="chip"><span data-l="en">Option</span><span data-l="ru">Опция</span></span>
+					<h3><span data-l="en">One deck for two</span><span data-l="ru">Одна колода на двоих</span></h3>
+					<p data-l="en">104 cards shared between you: every tarot, seal and edition shows on both sides. Or play with a deck each.</p>
+					<p data-l="ru">104 карты на двоих: каждое таро, печать и издание видны обоим. Или у каждого своя колода.</p>
+					<ul>
+						<li><span data-l="en">Pass a card to your partner (Pass)</span><span data-l="ru">Передай карту напарнику (Пас)</span></li>
+						<li><span data-l="en">Take one from their hand (Shared Hand)</span><span data-l="ru">Забери карту из его руки (Общая рука)</span></li>
+					</ul>
+				</div>
+			</article>
+
+			<article class="panel fcard wide c-green reveal">
+				<img src="img/art/balance.webp" width="960" height="710" loading="lazy" alt="">
+				<div class="fbody">
+					<span class="chip"><span data-l="en">Your rules</span><span data-l="ru">Свои правила</span></span>
+					<h3><span data-l="en">Nobody carries alone</span><span data-l="ru">Никто не тащит один</span></h3>
+					<p data-l="en">The host sets up the run in the lobby. Optional rules make you play as a real team.</p>
+					<p data-l="ru">Хозяин настраивает забег в лобби. Дополнительные правила заставляют играть по-настоящему командой.</p>
+					<ul>
+						<li><span data-l="en">Resonance: the more evenly you both score, the bigger an XMult (up to X1.5)</span><span data-l="ru">Резонанс: чем ровнее вы оба набираете, тем больше X (до X1.5)</span></li>
+						<li><span data-l="en">Share cap: one player covers at most 70% of the blind</span><span data-l="ru">Потолок вклада: один игрок закрывает максимум 70% блайнда</span></li>
+						<li><span data-l="en">Difficulty, evil bosses, deck and stake</span><span data-l="ru">Сложность, злые боссы, колода и ставка</span></li>
+					</ul>
+				</div>
+			</article>
+		</div>
+	</div>
+</section>
+
+<!-- ================= WHAT'S NEW ================= -->
 <section id="new">
 	<div class="wrap">
-		<div class="kicker reveal"><span data-l="en">Version 0.12.1</span><span data-l="ru">Версия 0.12.1</span></div>
-		<h2 class="reveal"><span data-l="en">What's new</span><span data-l="ru">Что нового</span></h2>
-		<p class="lead reveal">
-			<span data-l="en">In the game: the "What's new" button in the co-op menu. Everything else: the <a href="https://github.com/Dallowin/balatro-coop/blob/main/CHANGELOG.md">changelog</a>.</span>
-			<span data-l="ru">В игре — кнопка «Что нового» в меню коопа. Полный список — в <a href="https://github.com/Dallowin/balatro-coop/blob/main/CHANGELOG.md">журнале изменений</a>.</span>
-		</p>
-		<div class="newgrid">
-			<div class="tile reveal" style="--c: var(--gold)">
+		<div class="sec-head reveal">
+			<span class="kicker"><span data-l="en">Version 0.12.1</span><span data-l="ru">Версия 0.12.1</span></span>
+			<h2><span data-l="en">What's new</span><span data-l="ru">Что нового</span></h2>
+			<p class="lead">
+				<span data-l="en">In the game: the "What's new" button in the co-op menu. Everything else: the <a href="https://github.com/Dallowin/balatro-coop/blob/main/CHANGELOG.md">changelog</a>.</span>
+				<span data-l="ru">В игре — кнопка «Что нового» в меню коопа. Полный список — в <a href="https://github.com/Dallowin/balatro-coop/blob/main/CHANGELOG.md">журнале изменений</a>.</span>
+			</p>
+		</div>
+		<div class="grid g4">
+			<div class="panel tile acc c-gold reveal">
 				<h3><span data-l="en">Co-op enhancements</span><span data-l="ru">Кооп-улучшения</span></h3>
 				<p data-l="en">Bulwark, Mirror, Beacon, Twin and Torch: card upgrades that work for your partner, plus The Forge Tarot.</p>
 				<p data-l="ru">Оплот, Отражение, Маяк, Двойник и Факел — улучшения карт, которые работают на напарника, и таро «Кузня».</p>
 			</div>
-			<div class="tile reveal" style="--c: var(--purple)">
+			<div class="panel tile acc c-blue reveal">
 				<h3><span data-l="en">New editions</span><span data-l="ru">Новые издания</span></h3>
 				<p data-l="en">Union shimmers in both players' colours, Ether is a see-through ghost card. Their own shaders.</p>
 				<p data-l="ru">«Союз» переливается цветами двух игроков, «Эфир» — полупрозрачная карта-призрак. Свои шейдеры.</p>
 			</div>
-			<div class="tile reveal" style="--c: var(--purple)">
+			<div class="panel tile acc c-red reveal">
 				<h3><span data-l="en">Pair jokers</span><span data-l="ru">Парные джокеры</span></h3>
 				<p data-l="en">Yin &amp; Yang, Sun &amp; Moon, Sword &amp; Shield: strong only when split between you two.</p>
 				<p data-l="ru">Инь и Ян, Солнце и Луна, Меч и Щит: сильны, только когда половинки у разных игроков.</p>
 			</div>
-			<div class="tile reveal" style="--c: var(--blue)">
+			<div class="panel tile acc c-green reveal">
 				<h3><span data-l="en">Co-op cards</span><span data-l="ru">Кооп-карты</span></h3>
 				<p data-l="en">New Tarots, the Swap spectral, Bond and Sacrifice seals, Bulwark cards, from the Co-op Pack.</p>
 				<p data-l="ru">Новые таро, спектральная «Обмен», печати «Связь» и «Жертва», карты «Оплот» — из Кооп-пака.</p>
 			</div>
-			<div class="tile reveal" style="--c: var(--green)">
+			<div class="panel tile acc c-green reveal">
 				<h3><span data-l="en">Chat wheel &amp; pings</span><span data-l="ru">Колесо чата и пинги</span></h3>
 				<p data-l="en">Hold Y for quick phrases, ping any card with the middle mouse button, "Offer" in the shop.</p>
 				<p data-l="ru">Зажми Y — быстрые фразы, пингуй любую карту колёсиком, «Предложить» в лавке.</p>
 			</div>
-			<div class="tile reveal" style="--c: var(--red)">
+			<div class="panel tile acc c-red reveal">
 				<h3><span data-l="en">Only Steamodded</span><span data-l="ru">Только Steamodded</span></h3>
 				<p data-l="en">No MultiplayerAPI any more: Lovely, Steamodded and the mod. Play goes through Steam.</p>
 				<p data-l="ru">MultiplayerAPI больше не нужен: Lovely, Steamodded и мод. Игра идёт через Steam.</p>
 			</div>
-			<div class="tile reveal" style="--c: var(--purple)">
+			<div class="panel tile acc c-blue reveal">
 				<h3><span data-l="en">Shared consumables</span><span data-l="ru">Общие расходники</span></h3>
 				<p data-l="en">Tarots, planets and spectrals are one pool for both of you, with 4 slots.</p>
 				<p data-l="ru">Таро, планеты и спектральные карты — общие на двоих, 4 слота.</p>
 			</div>
-			<div class="tile reveal" style="--c: var(--gold)">
+			<div class="panel tile acc c-gold reveal">
 				<h3><span data-l="en">Daily run</span><span data-l="ru">Ежедневный забег</span></h3>
 				<p data-l="en">One seed and one set of rules a day for every pair, plus a challenge of the day.</p>
 				<p data-l="ru">Один сид и одни правила на день для всех пар + испытание дня.</p>
 			</div>
-			<div class="tile reveal" style="--c: var(--red)">
+			<div class="panel tile acc c-red reveal">
 				<h3><span data-l="en">Challenges</span><span data-l="ru">Испытания</span></h3>
 				<p data-l="en">Sprint, Tight, Broke, Specialists, Big hands. The blind requirement is adjusted to keep it fair.</p>
 				<p data-l="ru">Спринт, Теснота, Без гроша, Специалисты, Большие руки. Требование блайнда подстроено.</p>
 			</div>
-			<div class="tile reveal" style="--c: var(--blue)">
+			<div class="panel tile acc c-blue reveal">
 				<h3><span data-l="en">Co-op bosses</span><span data-l="ru">Кооп-боссы</span></h3>
 				<p data-l="en">The Envy, The Shackle, The Tyrant and The Fog hit your teamwork, not just your cards.</p>
 				<p data-l="ru">Ревность, Кандалы, Тиран и Туман бьют по командной игре, а не только по картам.</p>
 			</div>
-			<div class="tile reveal" style="--c: var(--green)">
+			<div class="panel tile acc c-green reveal">
 				<h3><span data-l="en">Team decks</span><span data-l="ru">Командные колоды</span></h3>
 				<p data-l="en">Siamese: both get the same draws. Red &amp; Black: one plays red suits, the other black.</p>
 				<p data-l="ru">Сиамская: у обоих одинаковые раздачи. Красное и чёрное: у одного красные масти, у другого чёрные.</p>
 			</div>
-			<div class="tile reveal" style="--c: var(--gold)">
+			<div class="panel tile acc c-gold reveal">
 				<h3><span data-l="en">Run history</span><span data-l="ru">История забегов</span></h3>
 				<p data-l="en">Every co-op run is kept, and "Copy result" gives you a line to share.</p>
 				<p data-l="ru">Каждый кооп-забег сохраняется, а «Скопировать результат» даёт строку, чтобы поделиться.</p>
@@ -290,256 +537,126 @@ html[lang="en"] [data-l="en"], html[lang="ru"] [data-l="ru"] { display: revert; 
 	</div>
 </section>
 
-<section id="features">
-	<div class="wrap">
-		<div class="kicker reveal"><span data-l="en">What's inside</span><span data-l="ru">Что внутри</span></div>
-		<h2 class="reveal"><span data-l="en">Built for two</span><span data-l="ru">Сделано для двоих</span></h2>
-		<p class="lead reveal">
-			<span data-l="en">Everything in Balatro, now shared: the blind, the shop, the money and the deck. One player can't carry the run alone.</span>
-			<span data-l="ru">Всё как в Balatro, только общее: блайнд, лавка, деньги и колода. Один игрок забег не вытащит.</span>
-		</p>
-
-		<div class="feature reveal">
-			<div class="art"><div class="frame tilt-l hov"><img src="img/art/blind.webp" width="960" height="710" loading="lazy" alt=""></div></div>
-			<div>
-				<span class="chip" style="--c: var(--red)"><span data-l="en">Core</span><span data-l="ru">Основа</span></span>
-				<h3><span data-l="en">One shared blind</span><span data-l="ru">Один общий блайнд</span></h3>
-				<p data-l="en">You take turns playing hands, and every chip you score lands in one shared pot.</p>
-				<p data-l="ru">Вы ходите руками по очереди, и все ваши фишки идут в один общий котёл.</p>
-				<ul>
-					<li style="--c: var(--red)"><span data-l="en">The blind is scaled for two (difficulty in the lobby)</span><span data-l="ru">Блайнд усилен под двоих (сложность — в лобби)</span></li>
-					<li style="--c: var(--red)"><span data-l="en">Alternating or simultaneous turns</span><span data-l="ru">Ходы по очереди или одновременно</span></li>
-					<li style="--c: var(--red)"><span data-l="en">Lose only when both of you are out of hands</span><span data-l="ru">Проигрыш — только когда руки кончились у обоих</span></li>
-				</ul>
-			</div>
-		</div>
-
-		<div class="feature flip reveal">
-			<div class="art"><div class="frame tilt-r hov"><img src="img/art/steam.webp" width="960" height="710" loading="lazy" alt=""></div></div>
-			<div>
-				<span class="chip" style="--c: var(--blue)">Steam</span>
-				<h3><span data-l="en">Invite any friend</span><span data-l="ru">Позови любого друга</span></h3>
-				<p data-l="en">No codes, no server. Steam connects you directly and handles the network for you.</p>
-				<p data-l="ru">Без кодов и сервера. Steam соединяет вас напрямую и сам разбирается с сетью.</p>
-				<ul>
-					<li style="--c: var(--blue)"><span data-l="en">The invite arrives in Steam chat, even if they aren't playing</span><span data-l="ru">Приглашение приходит в чат Steam, даже если друг не в игре</span></li>
-					<li style="--c: var(--blue)"><span data-l="en">One click: Balatro starts right into your lobby</span><span data-l="ru">Один клик — Balatro запускается сразу в твоё лобби</span></li>
-					<li style="--c: var(--blue)"><span data-l="en">Lobby codes through a server work too</span><span data-l="ru">Лобби по коду через сервер тоже работает</span></li>
-				</ul>
-			</div>
-		</div>
-
-		<div class="feature reveal">
-			<div class="art"><div class="frame tilt-l hov"><img src="img/art/shop.webp" width="960" height="710" loading="lazy" alt=""></div></div>
-			<div>
-				<span class="chip" style="--c: var(--gold)"><span data-l="en">Economy</span><span data-l="ru">Экономика</span></span>
-				<h3><span data-l="en">Shared shop &amp; wallet</span><span data-l="ru">Общая лавка и кошелёк</span></h3>
-				<p data-l="en">One shop for both of you, one wallet, shared vouchers. Plan the build together.</p>
-				<p data-l="ru">Одна лавка на двоих, один кошелёк, общие ваучеры. Билд собираете вместе.</p>
-				<ul>
-					<li style="--c: var(--gold)"><span data-l="en">What one of you buys is gone for the other</span><span data-l="ru">Что купил один — пропадает у другого</span></li>
-					<li style="--c: var(--gold)"><span data-l="en">You leave the shop together</span><span data-l="ru">Из лавки выходите вместе</span></li>
-					<li style="--c: var(--gold)"><span data-l="en">Vouchers work for both (and cost a bit more)</span><span data-l="ru">Ваучеры работают на обоих (и чуть дороже)</span></li>
-				</ul>
-			</div>
-		</div>
-
-		<div class="feature flip reveal">
-			<div class="art"><div class="frame tilt-r hov"><img src="img/art/live.webp" width="960" height="710" loading="lazy" alt=""></div></div>
-			<div>
-				<span class="chip" style="--c: var(--green)"><span data-l="en">Live</span><span data-l="ru">Вживую</span></span>
-				<h3><span data-l="en">Watch your partner score</span><span data-l="ru">Смотри, как считает напарник</span></h3>
-				<p data-l="en">Their hand and jokers sit above yours, and their chips × mult counts up in your HUD as it happens.</p>
-				<p data-l="ru">Его рука и джокеры над твоими, а его фишки × множ. накручиваются у тебя в HUD прямо во время подсчёта.</p>
-				<ul>
-					<li style="--c: var(--green)"><span data-l="en">Their played cards fly onto your board</span><span data-l="ru">Его сыгранные карты вылетают к тебе на стол</span></li>
-					<li style="--c: var(--green)"><span data-l="en">Hover their jokers to see their real values</span><span data-l="ru">Наведи на его джокеров — увидишь их реальные значения</span></li>
-					<li style="--c: var(--green)"><span data-l="en">Use your tarots on their cards</span><span data-l="ru">Применяй свои таро на его карты</span></li>
-				</ul>
-			</div>
-		</div>
-
-		<div class="feature reveal">
-			<div class="art"><div class="frame tilt-l hov"><img src="img/art/team.webp" width="960" height="710" loading="lazy" alt=""></div></div>
-			<div>
-				<span class="chip" style="--c: var(--purple)"><span data-l="en">Rare</span><span data-l="ru">Редкие</span></span>
-				<h3><span data-l="en">Team jokers</span><span data-l="ru">Командные джокеры</span></h3>
-				<p data-l="en">Three shared slots and nine rare jokers with their own art that only make sense as a team.</p>
-				<p data-l="ru">Три общих слота и девять редких джокеров со своей графикой, которые работают только в команде.</p>
-				<ul>
-					<li style="--c: var(--purple)"><span data-l="en">Echo passes Mult from your partner's hand to yours</span><span data-l="ru">Эхо передаёт множитель руки напарника в твою</span></li>
-					<li style="--c: var(--purple)"><span data-l="en">Bridge copies your partner's joker</span><span data-l="ru">Мост копирует джокера напарника</span></li>
-					<li style="--c: var(--purple)"><a href="#jokers"><span data-l="en">See all nine</span><span data-l="ru">Все девять</span></a></li>
-				</ul>
-			</div>
-		</div>
-
-		<div class="feature flip reveal">
-			<div class="art"><div class="frame tilt-r hov"><img src="img/art/deck.webp" width="960" height="710" loading="lazy" alt=""></div></div>
-			<div>
-				<span class="chip" style="--c: var(--blue)"><span data-l="en">Option</span><span data-l="ru">Опция</span></span>
-				<h3><span data-l="en">One deck for two</span><span data-l="ru">Одна колода на двоих</span></h3>
-				<p data-l="en">104 cards shared between you: every tarot, seal and edition shows on both sides. Or play with a deck each.</p>
-				<p data-l="ru">104 карты на двоих: каждое таро, печать и издание видны обоим. Или у каждого своя колода.</p>
-				<ul>
-					<li style="--c: var(--blue)"><span data-l="en">Pass a card to your partner (Pass)</span><span data-l="ru">Передай карту напарнику (Пас)</span></li>
-					<li style="--c: var(--blue)"><span data-l="en">Take one from their hand (Shared Hand)</span><span data-l="ru">Забери карту из его руки (Общая рука)</span></li>
-				</ul>
-			</div>
-		</div>
-
-		<div class="feature reveal">
-			<div class="art"><div class="frame tilt-l hov"><img src="img/art/balance.webp" width="960" height="710" loading="lazy" alt=""></div></div>
-			<div>
-				<span class="chip" style="--c: var(--purple)"><span data-l="en">Your rules</span><span data-l="ru">Свои правила</span></span>
-				<h3><span data-l="en">Nobody carries alone</span><span data-l="ru">Никто не тащит один</span></h3>
-				<p data-l="en">The host sets up the run in the lobby. Optional rules make you play as a real team.</p>
-				<p data-l="ru">Хозяин настраивает забег в лобби. Дополнительные правила заставляют играть по-настоящему командой.</p>
-				<ul>
-					<li style="--c: var(--purple)"><span data-l="en">Resonance: the more evenly you both score, the bigger an XMult (up to X1.5)</span><span data-l="ru">Резонанс: чем ровнее вы оба набираете, тем больше X (до X1.5)</span></li>
-					<li style="--c: var(--purple)"><span data-l="en">Share cap: one player covers at most 70% of the blind</span><span data-l="ru">Потолок вклада: один игрок закрывает максимум 70% блайнда</span></li>
-					<li style="--c: var(--purple)"><span data-l="en">Difficulty, evil bosses, deck and stake</span><span data-l="ru">Сложность, злые боссы, колода и ставка</span></li>
-				</ul>
-			</div>
-		</div>
-	</div>
-</section>
-
-<section id="casino" class="casino">
-	<div class="wrap">
-		<div class="kicker reveal"><span data-l="en">In every shop</span><span data-l="ru">В каждой лавке</span></div>
-		<h2 class="reveal"><span data-l="en">The Casino</span><span data-l="ru">Казино</span></h2>
-		<p class="lead reveal">
-			<span data-l="en">A scene of its own, right from the shop. Real (shared!) money, a bet you choose. The house keeps a small edge.</span>
-			<span data-l="ru">Отдельная сцена прямо из лавки. Настоящие (общие!) деньги, ставку выбираешь сам. Казино немного в плюсе.</span>
-		</p>
-		<div class="games">
-			<div class="game reveal">
-				<div class="frame hov"><img src="img/art/slots.webp" width="960" height="710" loading="lazy" alt=""></div>
-				<h3><span data-l="en">Slots</span><span data-l="ru">Слоты</span></h3>
-				<p data-l="en">Three reels of real jokers. Blueprint is wild and stands in for anything.</p>
-				<p data-l="ru">Три барабана из настоящих джокеров. Чертёж — дикий и заменяет любого.</p>
-				<div class="facts">
-					<span class="fact"><b>14</b> <span data-l="en">combos</span><span data-l="ru">комбинаций</span></span>
-					<span class="fact"><b>x100</b> <span data-l="en">jackpot</span><span data-l="ru">джекпот</span></span>
-					<span class="fact"><span data-l="en">Banana split, All suits…</span><span data-l="ru">Банановый сплит, Все масти…</span></span>
-					<span class="fact"><span data-l="en">payout table with odds</span><span data-l="ru">таблица выплат с шансами</span></span>
-				</div>
-			</div>
-			<div class="game reveal">
-				<div class="frame hov"><img src="img/art/blackjack.webp" width="960" height="710" loading="lazy" alt=""></div>
-				<h3><span data-l="en">Blackjack</span><span data-l="ru">Блэкджек</span></h3>
-				<p data-l="en">Real playing cards and real casino rules, dealt from a six-deck shoe.</p>
-				<p data-l="ru">Настоящие карты и настоящие правила казино, раздача из шуза на шесть колод.</p>
-				<div class="facts">
-					<span class="fact"><span data-l="en">dealer stands on</span><span data-l="ru">дилер стоит на</span> <b>17</b></span>
-					<span class="fact"><span data-l="en">blackjack</span><span data-l="ru">блэкджек</span> <b>3:2</b></span>
-					<span class="fact"><span data-l="en">insurance</span><span data-l="ru">страховка</span> <b>2:1</b></span>
-					<span class="fact"><span data-l="en">double &amp; split</span><span data-l="ru">удвоение и сплит</span></span>
-				</div>
-			</div>
-		</div>
-	</div>
-</section>
-
-<section id="shots">
-	<div class="wrap">
-		<div class="kicker reveal"><span data-l="en">In action</span><span data-l="ru">В деле</span></div>
-		<h2 class="reveal"><span data-l="en">See it in the game</span><span data-l="ru">Как это выглядит в игре</span></h2>
-		<div class="shots reveal">
-			<figure>
-				<div class="frame"><video src="media/big-hands.mp4" poster="media/big-hands.webp" width="1920" height="1080" autoplay muted loop playsinline preload="metadata" aria-label="Late game: a big hand with both boards full of jokers"></video></div>
-				<figcaption><span data-l="en">Late game: both boards stacked with jokers, huge X Mult, and your partner's hand counts toward the same blind</span><span data-l="ru">Поздняя игра: у обоих полные ряды джокеров, огромные иксы, и рука напарника идёт в тот же блайнд</span></figcaption>
-			</figure>
-			<div class="stack">
-				<figure>
-					<div class="frame"><video src="media/team-win.mp4" poster="media/team-win.webp" width="1920" height="1080" autoplay muted loop playsinline preload="metadata" aria-label="The team beats the blind"></video></div>
-					<figcaption><span data-l="en">The team beats the blind together</span><span data-l="ru">Команда вместе закрывает блайнд</span></figcaption>
-				</figure>
-				<figure>
-					<div class="frame"><video src="media/partner-score.mp4" poster="media/partner-score.webp" width="1920" height="1080" autoplay muted loop playsinline preload="metadata" aria-label="The partner's score flying into the round score"></video></div>
-					<figcaption><span data-l="en">Your partner's hand flies straight into the team score</span><span data-l="ru">Рука напарника залетает прямо в общий счёт</span></figcaption>
-				</figure>
-			</div>
-		</div>
-		<div class="shotgrid reveal">
-				<figure>
-					<div class="frame"><img src="media/shared-board.webp" width="1920" height="1080" loading="lazy" alt="The partner's hand and jokers on your board"></div>
-					<figcaption><span data-l="en">Your partner's hand, jokers and turn, live on your board</span><span data-l="ru">Рука, джокеры и ход напарника вживую на твоём столе</span></figcaption>
-				</figure>
-				<figure>
-					<div class="frame"><img src="media/lobby.webp" width="1920" height="1080" loading="lazy" alt="The co-op lobby"></div>
-					<figcaption><span data-l="en">Co-op lobby: shared or separate deck, turns, difficulty, challenges</span><span data-l="ru">Кооп-лобби: общая или раздельная колода, ходы, сложность, испытания</span></figcaption>
-				</figure>
-				<figure>
-					<div class="frame"><img src="media/shop-offer.webp" width="1920" height="1080" loading="lazy" alt="Offering a joker to the partner in the shop"></div>
-					<figcaption><span data-l="en">One shared shop: ping a card to offer it to your partner</span><span data-l="ru">Одна общая лавка: пингани карту, чтобы предложить её напарнику</span></figcaption>
-				</figure>
-				<figure>
-					<div class="frame"><img src="media/chat-wheel.webp" width="1920" height="1080" loading="lazy" alt="A chat wheel phrase"></div>
-					<figcaption><span data-l="en">Chat wheel and pings: talk without typing</span><span data-l="ru">Колесо чата и пинги: общение без набора текста</span></figcaption>
-				</figure>
-				<figure>
-					<div class="frame"><img src="media/casino.webp" width="1920" height="1080" loading="lazy" alt="The casino in the shop"></div>
-					<figcaption><span data-l="en">A casino in the shop: slots and blackjack with the shared money</span><span data-l="ru">Казино в лавке: слоты и блэкджек на общие деньги</span></figcaption>
-				</figure>
-		</div>
-	</div>
-</section>
-
+<!-- ================= CO-OP CARDS ================= -->
 <section id="cards">
 	<div class="wrap">
-		<div class="kicker reveal"><span data-l="en">New in 0.12</span><span data-l="ru">Новое в 0.12</span></div>
-		<h2 class="reveal"><span data-l="en">Co-op cards</span><span data-l="ru">Кооп-карты</span></h2>
-		<p class="lead reveal"><span data-l="en">Pairs to split between you, Tarots that reach your partner, and a pack to find them in.</span><span data-l="ru">Пары, которые надо разделить, таро, которые работают на напарника, и пак, где всё это найти.</span></p>
-		<div class="jgrid">
-			<div class="jcard reveal"><img src="img/cards/yin.png" width="142" height="190" alt="Yin" loading="lazy"><h3><span data-l="en">Yin</span><span data-l="ru">Инь</span></h3><p data-l="en">+4 Mult. Paired with Yang at your partner: X2 Mult too.</p><p data-l="ru">+4 Множ. Если Ян у напарника — ещё ×2.</p></div>
-			<div class="jcard reveal"><img src="img/cards/yang.png" width="142" height="190" alt="Yang" loading="lazy"><h3><span data-l="en">Yang</span><span data-l="ru">Ян</span></h3><p data-l="en">+4 Mult. Paired with Yin at your partner: X2 Mult too.</p><p data-l="ru">+4 Множ. Если Инь у напарника — ещё ×2.</p></div>
-			<div class="jcard reveal"><img src="img/cards/sun.png" width="142" height="190" alt="Sun" loading="lazy"><h3><span data-l="en">Sun</span><span data-l="ru">Солнце</span></h3><p data-l="en">+15 Chips per Heart and Diamond. Paired: per any card.</p><p data-l="ru">+15 фишек за черви и бубны. В паре — за любую карту.</p></div>
-			<div class="jcard reveal"><img src="img/cards/moon.png" width="142" height="190" alt="Moon" loading="lazy"><h3><span data-l="en">Moon</span><span data-l="ru">Луна</span></h3><p data-l="en">+15 Chips per Spade and Club. Paired: per any card.</p><p data-l="ru">+15 фишек за пики и трефы. В паре — за любую карту.</p></div>
-			<div class="jcard reveal"><img src="img/cards/sword.png" width="142" height="190" alt="Sword" loading="lazy"><h3><span data-l="en">Sword</span><span data-l="ru">Меч</span></h3><p data-l="en">X1.5 Mult. Paired with Shield: X2.5.</p><p data-l="ru">×1.5 Множ. В паре со Щитом — ×2.5.</p></div>
-			<div class="jcard reveal"><img src="img/cards/shield.png" width="142" height="190" alt="Shield" loading="lazy"><h3><span data-l="en">Shield</span><span data-l="ru">Щит</span></h3><p data-l="en">+1 discard every blind. Paired with Sword: +1 hand too.</p><p data-l="ru">+1 сброс в блайнде. В паре с Мечом — ещё +1 рука.</p></div>
-			<div class="jcard reveal"><img src="img/cards/bond.png" width="142" height="190" alt="The Bond" loading="lazy"><h3><span data-l="en">The Bond</span><span data-l="ru">Узы</span></h3><p data-l="en">Bond Seal on 2 cards: when played, your partner draws a card.</p><p data-l="ru">Печать «Связь» на 2 карты: сыграл — напарник берёт карту.</p></div>
-			<div class="jcard reveal"><img src="img/cards/offering.png" width="142" height="190" alt="The Offering" loading="lazy"><h3><span data-l="en">The Offering</span><span data-l="ru">Подношение</span></h3><p data-l="en">Sacrifice Seal on 2 cards: when discarded, your partner gets +1 discard.</p><p data-l="ru">Печать «Жертва» на 2 карты: сбросил — напарнику +1 сброс.</p></div>
-			<div class="jcard reveal"><img src="img/cards/fortress.png" width="142" height="190" alt="The Fortress" loading="lazy"><h3><span data-l="en">The Fortress</span><span data-l="ru">Твердыня</span></h3><p data-l="en">2 cards become Bulwark: held in your hand, every partner hand gets X1.2.</p><p data-l="ru">2 карты становятся «Оплотом»: пока в руке, каждая рука напарника ×1.2.</p></div>
-			<div class="jcard reveal"><img src="img/cards/twins.png" width="142" height="190" alt="The Twins" loading="lazy"><h3><span data-l="en">The Twins</span><span data-l="ru">Близнецы</span></h3><p data-l="en">Creates the other half of your partner's pair joker.</p><p data-l="ru">Создаёт вторую половинку к парному джокеру напарника.</p></div>
-			<div class="jcard reveal"><img src="img/cards/swap.png" width="142" height="190" alt="Swap" loading="lazy"><h3><span data-l="en">Swap</span><span data-l="ru">Обмен</span></h3><p data-l="en">Spectral: trade one of your jokers for one of your partner's.</p><p data-l="ru">Спектральная: меняет твоего джокера на джокера напарника.</p></div>
-			<div class="jcard reveal"><img src="img/cards/pack.png" width="142" height="190" alt="Co-op Pack" loading="lazy"><h3><span data-l="en">Co-op Pack</span><span data-l="ru">Кооп-пак</span></h3><p data-l="en">Pair jokers, co-op Tarots and Swap. Choose 1 of 3, or 2 of 5 in the Mega pack.</p><p data-l="ru">Парные джокеры, кооп-таро и «Обмен». 1 из 3, в Мега — 2 из 5.</p></div>
-			<div class="jcard reveal"><img src="img/cards/bulwark.png" width="142" height="190" alt="Bulwark" loading="lazy"><h3><span data-l="en">Bulwark</span><span data-l="ru">Оплот</span></h3><p data-l="en">Held in your hand: every partner hand gets X1.2 Mult.</p><p data-l="ru">Пока в руке: каждая рука напарника ×1.2.</p></div>
-			<div class="jcard reveal"><img src="img/cards/mirror.png" width="142" height="190" alt="Mirror" loading="lazy"><h3><span data-l="en">Mirror</span><span data-l="ru">Отражение</span></h3><p data-l="en">When scored, its chips go to your partner's next hand.</p><p data-l="ru">Засчитана — её фишки уходят в следующую руку напарника.</p></div>
-			<div class="jcard reveal"><img src="img/cards/beacon.png" width="142" height="190" alt="Beacon" loading="lazy"><h3><span data-l="en">Beacon</span><span data-l="ru">Маяк</span></h3><p data-l="en">+4 Mult, +4 more for each Beacon in your partner's hand.</p><p data-l="ru">+4 Множ. и ещё +4 за каждый Маяк в руке напарника.</p></div>
-			<div class="jcard reveal"><img src="img/cards/twin.png" width="142" height="190" alt="Twin" loading="lazy"><h3><span data-l="en">Twin</span><span data-l="ru">Двойник</span></h3><p data-l="en">X1.5 Mult if your partner's last hand had this rank.</p><p data-l="ru">×1.5, если в последней руке напарника был этот ранг.</p></div>
-			<div class="jcard reveal"><img src="img/cards/torch.png" width="142" height="190" alt="Torch" loading="lazy"><h3><span data-l="en">Torch</span><span data-l="ru">Факел</span></h3><p data-l="en">X2 Mult. 1 in 4 burns out, and your partner gets +1 hand.</p><p data-l="ru">×2. С шансом 1 из 4 сгорает — напарнику +1 рука.</p></div>
-			<div class="jcard reveal"><img src="img/cards/forge.png" width="142" height="190" alt="The Forge" loading="lazy"><h3><span data-l="en">The Forge</span><span data-l="ru">Кузня</span></h3><p data-l="en">Turns a card into a random co-op enhancement.</p><p data-l="ru">Превращает карту в случайное кооп-улучшение.</p></div>
+		<div class="sec-head reveal">
+			<span class="kicker"><span data-l="en">New in 0.12</span><span data-l="ru">Новое в 0.12</span></span>
+			<h2><span data-l="en">Co-op cards</span><span data-l="ru">Кооп-карты</span></h2>
+			<p class="lead"><span data-l="en">Pairs to split between you, Tarots that reach your partner, and a pack to find them in.</span><span data-l="ru">Пары, которые надо разделить, таро, которые работают на напарника, и пак, где всё это найти.</span></p>
+		</div>
+
+		<h3 class="subhead reveal"><span class="chip c-red"><span data-l="en">Pair jokers</span><span data-l="ru">Парные джокеры</span></span></h3>
+		<div class="cgrid">
+			<div class="panel ccard reveal"><img src="img/cards/yin.png" width="142" height="190" alt="Yin" loading="lazy"><h3><span data-l="en">Yin</span><span data-l="ru">Инь</span></h3><p data-l="en">+4 Mult. Paired with Yang at your partner: X2 Mult too.</p><p data-l="ru">+4 Множ. Если Ян у напарника — ещё ×2.</p></div>
+			<div class="panel ccard reveal"><img src="img/cards/yang.png" width="142" height="190" alt="Yang" loading="lazy"><h3><span data-l="en">Yang</span><span data-l="ru">Ян</span></h3><p data-l="en">+4 Mult. Paired with Yin at your partner: X2 Mult too.</p><p data-l="ru">+4 Множ. Если Инь у напарника — ещё ×2.</p></div>
+			<div class="panel ccard reveal"><img src="img/cards/sun.png" width="142" height="190" alt="Sun" loading="lazy"><h3><span data-l="en">Sun</span><span data-l="ru">Солнце</span></h3><p data-l="en">+15 Chips per Heart and Diamond. Paired: per any card.</p><p data-l="ru">+15 фишек за черви и бубны. В паре — за любую карту.</p></div>
+			<div class="panel ccard reveal"><img src="img/cards/moon.png" width="142" height="190" alt="Moon" loading="lazy"><h3><span data-l="en">Moon</span><span data-l="ru">Луна</span></h3><p data-l="en">+15 Chips per Spade and Club. Paired: per any card.</p><p data-l="ru">+15 фишек за пики и трефы. В паре — за любую карту.</p></div>
+			<div class="panel ccard reveal"><img src="img/cards/sword.png" width="142" height="190" alt="Sword" loading="lazy"><h3><span data-l="en">Sword</span><span data-l="ru">Меч</span></h3><p data-l="en">X1.5 Mult. Paired with Shield: X2.5.</p><p data-l="ru">×1.5 Множ. В паре со Щитом — ×2.5.</p></div>
+			<div class="panel ccard reveal"><img src="img/cards/shield.png" width="142" height="190" alt="Shield" loading="lazy"><h3><span data-l="en">Shield</span><span data-l="ru">Щит</span></h3><p data-l="en">+1 discard every blind. Paired with Sword: +1 hand too.</p><p data-l="ru">+1 сброс в блайнде. В паре с Мечом — ещё +1 рука.</p></div>
+		</div>
+
+		<h3 class="subhead reveal"><span class="chip c-blue"><span data-l="en">Tarots &amp; spectral</span><span data-l="ru">Таро и спектральная</span></span></h3>
+		<div class="cgrid">
+			<div class="panel ccard reveal"><img src="img/cards/bond.png" width="142" height="190" alt="The Bond" loading="lazy"><h3><span data-l="en">The Bond</span><span data-l="ru">Узы</span></h3><p data-l="en">Bond Seal on 2 cards: when played, your partner draws a card.</p><p data-l="ru">Печать «Связь» на 2 карты: сыграл — напарник берёт карту.</p></div>
+			<div class="panel ccard reveal"><img src="img/cards/offering.png" width="142" height="190" alt="The Offering" loading="lazy"><h3><span data-l="en">The Offering</span><span data-l="ru">Подношение</span></h3><p data-l="en">Sacrifice Seal on 2 cards: when discarded, your partner gets +1 discard.</p><p data-l="ru">Печать «Жертва» на 2 карты: сбросил — напарнику +1 сброс.</p></div>
+			<div class="panel ccard reveal"><img src="img/cards/fortress.png" width="142" height="190" alt="The Fortress" loading="lazy"><h3><span data-l="en">The Fortress</span><span data-l="ru">Твердыня</span></h3><p data-l="en">2 cards become Bulwark: held in your hand, every partner hand gets X1.2.</p><p data-l="ru">2 карты становятся «Оплотом»: пока в руке, каждая рука напарника ×1.2.</p></div>
+			<div class="panel ccard reveal"><img src="img/cards/twins.png" width="142" height="190" alt="The Twins" loading="lazy"><h3><span data-l="en">The Twins</span><span data-l="ru">Близнецы</span></h3><p data-l="en">Creates the other half of your partner's pair joker.</p><p data-l="ru">Создаёт вторую половинку к парному джокеру напарника.</p></div>
+			<div class="panel ccard reveal"><img src="img/cards/forge.png" width="142" height="190" alt="The Forge" loading="lazy"><h3><span data-l="en">The Forge</span><span data-l="ru">Кузня</span></h3><p data-l="en">Turns a card into a random co-op enhancement.</p><p data-l="ru">Превращает карту в случайное кооп-улучшение.</p></div>
+			<div class="panel ccard reveal"><img src="img/cards/swap.png" width="142" height="190" alt="Swap" loading="lazy"><h3><span data-l="en">Swap</span><span data-l="ru">Обмен</span></h3><p data-l="en">Spectral: trade one of your jokers for one of your partner's.</p><p data-l="ru">Спектральная: меняет твоего джокера на джокера напарника.</p></div>
+		</div>
+
+		<h3 class="subhead reveal"><span class="chip c-gold"><span data-l="en">Enhancements &amp; the pack</span><span data-l="ru">Улучшения и пак</span></span></h3>
+		<div class="cgrid">
+			<div class="panel ccard reveal"><img src="img/cards/bulwark.png" width="142" height="190" alt="Bulwark" loading="lazy"><h3><span data-l="en">Bulwark</span><span data-l="ru">Оплот</span></h3><p data-l="en">Held in your hand: every partner hand gets X1.2 Mult.</p><p data-l="ru">Пока в руке: каждая рука напарника ×1.2.</p></div>
+			<div class="panel ccard reveal"><img src="img/cards/mirror.png" width="142" height="190" alt="Mirror" loading="lazy"><h3><span data-l="en">Mirror</span><span data-l="ru">Отражение</span></h3><p data-l="en">When scored, its chips go to your partner's next hand.</p><p data-l="ru">Засчитана — её фишки уходят в следующую руку напарника.</p></div>
+			<div class="panel ccard reveal"><img src="img/cards/beacon.png" width="142" height="190" alt="Beacon" loading="lazy"><h3><span data-l="en">Beacon</span><span data-l="ru">Маяк</span></h3><p data-l="en">+4 Mult, +4 more for each Beacon in your partner's hand.</p><p data-l="ru">+4 Множ. и ещё +4 за каждый Маяк в руке напарника.</p></div>
+			<div class="panel ccard reveal"><img src="img/cards/twin.png" width="142" height="190" alt="Twin" loading="lazy"><h3><span data-l="en">Twin</span><span data-l="ru">Двойник</span></h3><p data-l="en">X1.5 Mult if your partner's last hand had this rank.</p><p data-l="ru">×1.5, если в последней руке напарника был этот ранг.</p></div>
+			<div class="panel ccard reveal"><img src="img/cards/torch.png" width="142" height="190" alt="Torch" loading="lazy"><h3><span data-l="en">Torch</span><span data-l="ru">Факел</span></h3><p data-l="en">X2 Mult. 1 in 4 burns out, and your partner gets +1 hand.</p><p data-l="ru">×2. С шансом 1 из 4 сгорает — напарнику +1 рука.</p></div>
+			<div class="panel ccard reveal"><img src="img/cards/pack.png" width="142" height="190" alt="Co-op Pack" loading="lazy"><h3><span data-l="en">Co-op Pack</span><span data-l="ru">Кооп-пак</span></h3><p data-l="en">Pair jokers, co-op Tarots and Swap. Choose 1 of 3, or 2 of 5 in the Mega pack.</p><p data-l="ru">Парные джокеры, кооп-таро и «Обмен». 1 из 3, в Мега — 2 из 5.</p></div>
 		</div>
 	</div>
 </section>
 
+<!-- ================= TEAM JOKERS ================= -->
 <section id="jokers">
 	<div class="wrap">
-		<div class="kicker reveal"><span data-l="en">Rare · shared slots</span><span data-l="ru">Редкие · общие слоты</span></div>
-		<h2 class="reveal"><span data-l="en">Team jokers</span><span data-l="ru">Командные джокеры</span></h2>
-		<p class="lead reveal"><span data-l="en">Expensive, and every one of them works for both of you.</span><span data-l="ru">Дорогие, и каждый работает на вас обоих.</span></p>
-		<div class="jgrid">
-			<div class="jcard reveal"><img src="img/jokers/pass.png" width="142" height="190" alt="Pass" loading="lazy"><h3><span data-l="en">Pass</span><span data-l="ru">Пас</span></h3><p data-l="en">Once per turn, give 1 selected card from your hand to your partner.</p><p data-l="ru">Раз в ход отдай напарнику 1 выбранную карту из руки.</p><span class="jtag"><span data-l="en">Shared deck only</span><span data-l="ru">Только с общей колодой</span></span></div>
-			<div class="jcard reveal"><img src="img/jokers/bridge.png" width="142" height="190" alt="Bridge" loading="lazy"><h3><span data-l="en">Bridge</span><span data-l="ru">Мост</span></h3><p data-l="en">Copies your partner's rightmost Joker, like Blueprint, with its real values.</p><p data-l="ru">Копирует самого правого джокера напарника, как Чертёж, с его реальными значениями.</p></div>
-			<div class="jcard reveal"><img src="img/jokers/echo.png" width="142" height="190" alt="Echo" loading="lazy"><h3><span data-l="en">Echo</span><span data-l="ru">Эхо</span></h3><p data-l="en">Your hand gets +Mult equal to 35% of your partner's last hand Mult.</p><p data-l="ru">Твоя рука получает +Множ. = 35% от множителя последней руки напарника.</p></div>
-			<div class="jcard reveal"><img src="img/jokers/double.png" width="142" height="190" alt="Double Strike" loading="lazy"><h3><span data-l="en">Double Strike</span><span data-l="ru">Двойной удар</span></h3><p data-l="en">X3 Mult if you play the same poker hand your partner played this blind.</p><p data-l="ru">X3 Множ., если играешь ту же покерную руку, что напарник в этом блайнде.</p></div>
-			<div class="jcard reveal"><img src="img/jokers/chain.png" width="142" height="190" alt="Chain" loading="lazy"><h3><span data-l="en">Chain</span><span data-l="ru">Цепь</span></h3><p data-l="en">Beat your partner's previous hand: +X0.25 Mult to the chain for both.</p><p data-l="ru">Перебил прошлую руку напарника — цепь даёт обоим +X0.25 Множ.</p></div>
-			<div class="jcard reveal"><img src="img/jokers/contrast.png" width="142" height="190" alt="Contrast" loading="lazy"><h3><span data-l="en">Contrast</span><span data-l="ru">Контраст</span></h3><p data-l="en">X2.5 Mult if you play a different poker hand than your partner this blind.</p><p data-l="ru">X2.5 Множ., если играешь другую покерную руку, чем напарник.</p></div>
-			<div class="jcard reveal"><img src="img/jokers/shared_hand.png" width="142" height="190" alt="Shared Hand" loading="lazy"><h3><span data-l="en">Shared Hand</span><span data-l="ru">Общая рука</span></h3><p data-l="en">Once per blind, take a card from your partner's hand into yours.</p><p data-l="ru">Раз в блайнд забери карту из руки напарника себе.</p><span class="jtag"><span data-l="en">Shared deck only</span><span data-l="ru">Только с общей колодой</span></span></div>
-			<div class="jcard reveal"><img src="img/jokers/support.png" width="142" height="190" alt="Support" loading="lazy"><h3><span data-l="en">Support</span><span data-l="ru">Опора</span></h3><p data-l="en">Your last hand of the blind gets +Chips equal to 25% of what your partner scored.</p><p data-l="ru">Последняя рука в блайнде получает +Фишки = 25% от очков напарника.</p></div>
-			<div class="jcard reveal"><img src="img/jokers/second_wind.png" width="142" height="190" alt="Second Wind" loading="lazy"><h3><span data-l="en">Second Wind</span><span data-l="ru">Второе дыхание</span></h3><p data-l="en">Lost a blind but scored at least 75%? It counts as beaten. Once.</p><p data-l="ru">Проиграли блайнд, но набрали хотя бы 75%? Он засчитан. Один раз.</p></div>
+		<div class="sec-head reveal">
+			<span class="kicker"><span data-l="en">Rare · shared slots</span><span data-l="ru">Редкие · общие слоты</span></span>
+			<h2><span data-l="en">Team jokers</span><span data-l="ru">Командные джокеры</span></h2>
+			<p class="lead"><span data-l="en">Expensive, and every one of them works for both of you.</span><span data-l="ru">Дорогие, и каждый работает на вас обоих.</span></p>
+		</div>
+		<div class="cgrid">
+			<div class="panel ccard reveal"><img src="img/jokers/pass.png" width="142" height="190" alt="Pass" loading="lazy"><h3><span data-l="en">Pass</span><span data-l="ru">Пас</span></h3><p data-l="en">Once per turn, give 1 selected card from your hand to your partner.</p><p data-l="ru">Раз в ход отдай напарнику 1 выбранную карту из руки.</p><span class="jtag"><span data-l="en">Shared deck only</span><span data-l="ru">Только с общей колодой</span></span></div>
+			<div class="panel ccard reveal"><img src="img/jokers/bridge.png" width="142" height="190" alt="Bridge" loading="lazy"><h3><span data-l="en">Bridge</span><span data-l="ru">Мост</span></h3><p data-l="en">Copies your partner's rightmost Joker, like Blueprint, with its real values.</p><p data-l="ru">Копирует самого правого джокера напарника, как Чертёж, с его реальными значениями.</p></div>
+			<div class="panel ccard reveal"><img src="img/jokers/echo.png" width="142" height="190" alt="Echo" loading="lazy"><h3><span data-l="en">Echo</span><span data-l="ru">Эхо</span></h3><p data-l="en">Your hand gets +Mult equal to 35% of your partner's last hand Mult.</p><p data-l="ru">Твоя рука получает +Множ. = 35% от множителя последней руки напарника.</p></div>
+			<div class="panel ccard reveal"><img src="img/jokers/double.png" width="142" height="190" alt="Double Strike" loading="lazy"><h3><span data-l="en">Double Strike</span><span data-l="ru">Двойной удар</span></h3><p data-l="en">X3 Mult if you play the same poker hand your partner played this blind.</p><p data-l="ru">X3 Множ., если играешь ту же покерную руку, что напарник в этом блайнде.</p></div>
+			<div class="panel ccard reveal"><img src="img/jokers/chain.png" width="142" height="190" alt="Chain" loading="lazy"><h3><span data-l="en">Chain</span><span data-l="ru">Цепь</span></h3><p data-l="en">Beat your partner's previous hand: +X0.25 Mult to the chain for both.</p><p data-l="ru">Перебил прошлую руку напарника — цепь даёт обоим +X0.25 Множ.</p></div>
+			<div class="panel ccard reveal"><img src="img/jokers/contrast.png" width="142" height="190" alt="Contrast" loading="lazy"><h3><span data-l="en">Contrast</span><span data-l="ru">Контраст</span></h3><p data-l="en">X2.5 Mult if you play a different poker hand than your partner this blind.</p><p data-l="ru">X2.5 Множ., если играешь другую покерную руку, чем напарник.</p></div>
+			<div class="panel ccard reveal"><img src="img/jokers/shared_hand.png" width="142" height="190" alt="Shared Hand" loading="lazy"><h3><span data-l="en">Shared Hand</span><span data-l="ru">Общая рука</span></h3><p data-l="en">Once per blind, take a card from your partner's hand into yours.</p><p data-l="ru">Раз в блайнд забери карту из руки напарника себе.</p><span class="jtag"><span data-l="en">Shared deck only</span><span data-l="ru">Только с общей колодой</span></span></div>
+			<div class="panel ccard reveal"><img src="img/jokers/support.png" width="142" height="190" alt="Support" loading="lazy"><h3><span data-l="en">Support</span><span data-l="ru">Опора</span></h3><p data-l="en">Your last hand of the blind gets +Chips equal to 25% of what your partner scored.</p><p data-l="ru">Последняя рука в блайнде получает +Фишки = 25% от очков напарника.</p></div>
+			<div class="panel ccard reveal"><img src="img/jokers/second_wind.png" width="142" height="190" alt="Second Wind" loading="lazy"><h3><span data-l="en">Second Wind</span><span data-l="ru">Второе дыхание</span></h3><p data-l="en">Lost a blind but scored at least 75%? It counts as beaten. Once.</p><p data-l="ru">Проиграли блайнд, но набрали хотя бы 75%? Он засчитан. Один раз.</p></div>
 		</div>
 	</div>
 </section>
 
+<!-- ================= CASINO ================= -->
+<section id="casino" class="casino">
+	<div class="wrap">
+		<div class="sec-head reveal">
+			<span class="kicker"><span data-l="en">In every shop</span><span data-l="ru">В каждой лавке</span></span>
+			<h2><span data-l="en">The Casino</span><span data-l="ru">Казино</span></h2>
+			<p class="lead">
+				<span data-l="en">A scene of its own, right from the shop. Real (shared!) money, a bet you choose. The house keeps a small edge.</span>
+				<span data-l="ru">Отдельная сцена прямо из лавки. Настоящие (общие!) деньги, ставку выбираешь сам. Казино немного в плюсе.</span>
+			</p>
+		</div>
+		<div class="grid g2">
+			<article class="panel fcard reveal">
+				<img src="img/art/slots.webp" width="960" height="710" loading="lazy" alt="">
+				<div class="fbody">
+					<h3><span data-l="en">Slots</span><span data-l="ru">Слоты</span></h3>
+					<p data-l="en">Three reels of real jokers. Blueprint is wild and stands in for anything.</p>
+					<p data-l="ru">Три барабана из настоящих джокеров. Чертёж — дикий и заменяет любого.</p>
+					<div class="facts">
+						<span class="fact"><b>14</b> <span data-l="en">combos</span><span data-l="ru">комбинаций</span></span>
+						<span class="fact"><b>x100</b> <span data-l="en">jackpot</span><span data-l="ru">джекпот</span></span>
+						<span class="fact"><span data-l="en">Banana split, All suits…</span><span data-l="ru">Банановый сплит, Все масти…</span></span>
+						<span class="fact"><span data-l="en">payout table with odds</span><span data-l="ru">таблица выплат с шансами</span></span>
+					</div>
+				</div>
+			</article>
+			<article class="panel fcard reveal">
+				<img src="img/art/blackjack.webp" width="960" height="710" loading="lazy" alt="">
+				<div class="fbody">
+					<h3><span data-l="en">Blackjack</span><span data-l="ru">Блэкджек</span></h3>
+					<p data-l="en">Real playing cards and real casino rules, dealt from a six-deck shoe.</p>
+					<p data-l="ru">Настоящие карты и настоящие правила казино, раздача из шуза на шесть колод.</p>
+					<div class="facts">
+						<span class="fact"><span data-l="en">dealer stands on</span><span data-l="ru">дилер стоит на</span> <b>17</b></span>
+						<span class="fact"><span data-l="en">blackjack</span><span data-l="ru">блэкджек</span> <b>3:2</b></span>
+						<span class="fact"><span data-l="en">insurance</span><span data-l="ru">страховка</span> <b>2:1</b></span>
+						<span class="fact"><span data-l="en">double &amp; split</span><span data-l="ru">удвоение и сплит</span></span>
+					</div>
+				</div>
+			</article>
+		</div>
+		<figure class="media casino-shot reveal">
+			<div class="bezel"><img src="media/casino.webp" width="1920" height="1080" loading="lazy" alt="The casino in the shop"></div>
+			<figcaption><span data-l="en">A casino in the shop: slots and blackjack with the shared money</span><span data-l="ru">Казино в лавке: слоты и блэкджек на общие деньги</span></figcaption>
+		</figure>
+	</div>
+</section>
+
+<!-- ================= INSTALL ================= -->
 <section id="install">
 	<div class="wrap">
-		<div class="kicker reveal"><span data-l="en">5 minutes</span><span data-l="ru">5 минут</span></div>
-		<h2 class="reveal"><span data-l="en">Install &amp; play</span><span data-l="ru">Установка и игра</span></h2>
-		<div class="cols">
-			<div class="card reveal">
+		<div class="sec-head reveal">
+			<span class="kicker"><span data-l="en">5 minutes</span><span data-l="ru">5 минут</span></span>
+			<h2><span data-l="en">Install &amp; play</span><span data-l="ru">Установка и игра</span></h2>
+		</div>
+		<div class="grid g2">
+			<div class="panel card acc c-gold reveal">
 				<h3><span data-l="en">Install</span><span data-l="ru">Установка</span></h3>
 				<div class="deps">
 					<div class="dep"><span>Lovely Injector</span><a href="https://github.com/ethangreen-dev/lovely-injector/releases">GitHub</a></div>
@@ -553,7 +670,7 @@ html[lang="en"] [data-l="en"], html[lang="ru"] [data-l="ru"] { display: revert; 
 					<div class="step"><p data-l="en"><b>Start Balatro from Steam.</b> Both players need the same version.</p><p data-l="ru"><b>Запусти Balatro через Steam.</b> У обоих должна быть одинаковая версия.</p></div>
 				</div>
 			</div>
-			<div class="card reveal">
+			<div class="panel card acc c-blue reveal">
 				<h3><span data-l="en">Play</span><span data-l="ru">Игра</span></h3>
 				<div class="steps">
 					<div class="step"><p data-l="en">Co-op menu → <b>Play via Steam</b> → <b>Invite via Steam</b>, pick your friend.</p><p data-l="ru">Меню коопа → <b>Играть через Steam</b> → <b>Позвать через Steam</b>, выбери друга.</p></div>
@@ -566,44 +683,51 @@ html[lang="en"] [data-l="en"], html[lang="ru"] [data-l="ru"] { display: revert; 
 	</div>
 </section>
 
+<!-- ================= FAQ ================= -->
 <section id="faq">
 	<div class="wrap">
-		<h2 class="reveal">FAQ</h2>
-		<details class="reveal">
-			<summary><span data-l="en">My friend doesn't get the invite</span><span data-l="ru">Друг не получает приглашение</span></summary>
-			<p data-l="en">You must be Steam friends, both start Balatro from Steam, same mod version. If Balatro is already open on their side, they can also open "Play via Steam" and click Join next to you.</p>
-			<p data-l="ru">Вы должны быть друзьями в Steam, оба запускаете Balatro через Steam, версия мода одинаковая. Если у друга игра уже открыта, он может зайти в «Играть через Steam» и нажать «Войти» напротив тебя.</p>
-		</details>
-		<details class="reveal">
-			<summary><span data-l="en">The Start button is grey</span><span data-l="ru">Кнопка «Старт» серая</span></summary>
-			<p data-l="en">The second player hasn't joined, isn't ready, or has a different mod version (the lobby shows both).</p>
-			<p data-l="ru">Второй игрок не зашёл, не нажал «Готов» или у него другая версия мода (лобби показывает обе).</p>
-		</details>
-		<details class="reveal">
-			<summary><span data-l="en">Nobody can play, the turn is stuck</span><span data-l="ru">Никто не может ходить, ход завис</span></summary>
-			<p data-l="en">Wait a few seconds: the turn fixes itself. If not, press "Unstick turn" in the panel on the right.</p>
-			<p data-l="ru">Подождите несколько секунд — ход починится сам. Если нет, нажмите «Разблокировать ход» в панели справа.</p>
-		</details>
-		<details class="reveal">
-			<summary><span data-l="en">Mac, Linux, mobile?</span><span data-l="ru">Mac, Linux, телефон?</span></summary>
-			<p data-l="en">Tested on Windows. Mobile versions can't load mods.</p>
-			<p data-l="ru">Проверено на Windows. Мобильные версии моды не поддерживают.</p>
-		</details>
-		<details class="reveal">
-			<summary><span data-l="en">I found a bug</span><span data-l="ru">Нашёл баг</span></summary>
-			<p data-l="en">Open an <a href="https://github.com/Dallowin/balatro-coop/issues">issue</a> with the log from <code>%AppData%\Balatro\Mods\lovely\log</code>.</p>
-			<p data-l="ru">Создай <a href="https://github.com/Dallowin/balatro-coop/issues">issue</a> и приложи лог из <code>%AppData%\Balatro\Mods\lovely\log</code>.</p>
-		</details>
+		<div class="sec-head reveal">
+			<span class="kicker"><span data-l="en">Help</span><span data-l="ru">Помощь</span></span>
+			<h2>FAQ</h2>
+		</div>
+		<div class="faq">
+			<details class="panel reveal">
+				<summary><span data-l="en">My friend doesn't get the invite</span><span data-l="ru">Друг не получает приглашение</span></summary>
+				<p data-l="en">You must be Steam friends, both start Balatro from Steam, same mod version. If Balatro is already open on their side, they can also open "Play via Steam" and click Join next to you.</p>
+				<p data-l="ru">Вы должны быть друзьями в Steam, оба запускаете Balatro через Steam, версия мода одинаковая. Если у друга игра уже открыта, он может зайти в «Играть через Steam» и нажать «Войти» напротив тебя.</p>
+			</details>
+			<details class="panel reveal">
+				<summary><span data-l="en">The Start button is grey</span><span data-l="ru">Кнопка «Старт» серая</span></summary>
+				<p data-l="en">The second player hasn't joined, isn't ready, or has a different mod version (the lobby shows both).</p>
+				<p data-l="ru">Второй игрок не зашёл, не нажал «Готов» или у него другая версия мода (лобби показывает обе).</p>
+			</details>
+			<details class="panel reveal">
+				<summary><span data-l="en">Nobody can play, the turn is stuck</span><span data-l="ru">Никто не может ходить, ход завис</span></summary>
+				<p data-l="en">Wait a few seconds: the turn fixes itself. If not, press "Unstick turn" in the panel on the right.</p>
+				<p data-l="ru">Подождите несколько секунд — ход починится сам. Если нет, нажмите «Разблокировать ход» в панели справа.</p>
+			</details>
+			<details class="panel reveal">
+				<summary><span data-l="en">Mac, Linux, mobile?</span><span data-l="ru">Mac, Linux, телефон?</span></summary>
+				<p data-l="en">Tested on Windows. Mobile versions can't load mods.</p>
+				<p data-l="ru">Проверено на Windows. Мобильные версии моды не поддерживают.</p>
+			</details>
+			<details class="panel reveal">
+				<summary><span data-l="en">I found a bug</span><span data-l="ru">Нашёл баг</span></summary>
+				<p data-l="en">Open an <a href="https://github.com/Dallowin/balatro-coop/issues">issue</a> with the log from <code>%AppData%\Balatro\Mods\lovely\log</code>.</p>
+				<p data-l="ru">Создай <a href="https://github.com/Dallowin/balatro-coop/issues">issue</a> и приложи лог из <code>%AppData%\Balatro\Mods\lovely\log</code>.</p>
+			</details>
+		</div>
 	</div>
 </section>
 
 <footer>
 	<div class="wrap">
+		<a class="logo" href="#">Balatro <b>Co-op</b></a>
 		<p>
 			<span data-l="en">Built on Lovely and Steamodded. Balatro by LocalThunk / Playstack. Unofficial fan mod, GPL-3.0. Illustrations are AI-generated; screenshots are from the game.</span>
 			<span data-l="ru">Построен на Lovely и Steamodded. Balatro — LocalThunk / Playstack. Неофициальный фанатский мод, GPL-3.0. Иллюстрации сгенерированы ИИ, скриншоты — из игры.</span>
 		</p>
-		<p><a href="https://github.com/Dallowin/balatro-coop">github.com/Dallowin/balatro-coop</a></p>
+		<a class="btn blue sm" href="https://github.com/Dallowin/balatro-coop">github.com/Dallowin/balatro-coop</a>
 	</div>
 </footer>
 
@@ -620,21 +744,43 @@ html[lang="en"] [data-l="en"], html[lang="ru"] [data-l="ru"] { display: revert; 
 	set(saved || ((navigator.language || '').toLowerCase().indexOf('ru') === 0 ? 'ru' : 'en'));
 	document.querySelectorAll('.lang button').forEach(function (b) { b.addEventListener('click', function () { set(b.dataset.set); }); });
 
-	// sections fade in as they scroll into view
+	// items fade in as they scroll into view; siblings in a grid get a small stagger
 	var items = document.querySelectorAll('.reveal');
+	items.forEach(function (el) {
+		var p = el.parentElement, i = 0;
+		if (p && (p.classList.contains('grid') || p.classList.contains('cgrid') || p.classList.contains('faq'))) {
+			i = Array.prototype.indexOf.call(p.children, el);
+			el.style.transitionDelay = ((i % 6) * 60) + 'ms';
+		}
+	});
 	if ('IntersectionObserver' in window) {
 		var io = new IntersectionObserver(function (entries) {
-			entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+			entries.forEach(function (e) { if (e.isIntersecting) {
+				var t = e.target;
+				t.classList.add('in'); io.unobserve(t);
+				setTimeout(function () { t.style.transitionDelay = ''; }, 1200);
+			} });
 		}, { rootMargin: '0px 0px -8% 0px' });
 		items.forEach(function (el) { io.observe(el); });
+
+		// clips in the gallery play only while on screen
+		var vio = new IntersectionObserver(function (entries) {
+			entries.forEach(function (e) {
+				var v = e.target;
+				if (e.isIntersecting) { var p = v.play(); if (p && p.catch) p.catch(function () {}); }
+				else v.pause();
+			});
+		}, { threshold: .35 });
+		document.querySelectorAll('video[data-auto]').forEach(function (v) { vio.observe(v); });
 	} else {
 		items.forEach(function (el) { el.classList.add('in'); });
+		document.querySelectorAll('video[data-auto]').forEach(function (v) { v.autoplay = true; v.play(); });
 	}
 
 	// latest release on the download button
 	fetch('https://api.github.com/repos/Dallowin/balatro-coop/releases/latest')
 		.then(function (r) { return r.ok ? r.json() : null; })
-		.then(function (rel) { if (rel && rel.tag_name) document.getElementById('ver').textContent = rel.tag_name; })
+		.then(function (rel) { if (rel && rel.tag_name) document.getElementById('ver').textContent = ' · ' + rel.tag_name; })
 		.catch(function () {});
 })();
 </script>
