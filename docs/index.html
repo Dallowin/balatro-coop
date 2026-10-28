@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Balatro Co-op</title>
+<meta name="description" content="Co-op mode for Balatro: two players, one run, one shared score against every blind. Play via Steam with a friend.">
+<meta property="og:title" content="Balatro Co-op">
+<meta property="og:description" content="Two players, one run, one shared score against every blind.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://dallowin.github.io/balatro-coop/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='5' width='15' height='22' rx='3' fill='%23fe5f55' transform='rotate(-10 10 16)'/%3E%3Crect x='14' y='5' width='15' height='22' rx='3' fill='%23009dff' transform='rotate(10 22 16)'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+	--bg: #1e2b2d;
+	--bg2: #253537;
+	--panel: #374244;
+	--panel2: #2d3a3c;
+	--text: #f2f2ee;
+	--muted: #a9b6b5;
+	--red: #fe5f55;
+	--blue: #009dff;
+	--gold: #f5b143;
+	--green: #4bc292;
+	--purple: #c552e0;
+	--shadow: rgba(0, 0, 0, .35);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+	margin: 0;
+	background: radial-gradient(ellipse at top, #2c4a46 0%, var(--bg) 55%) fixed, var(--bg);
+	color: var(--text);
+	font: 16px/1.6 Inter, system-ui, sans-serif;
+}
+a { color: var(--blue); }
+h1, h2, h3, .pix { font-family: 'Pixelify Sans', monospace; letter-spacing: .02em; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+
+nav { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; gap: 12px; }
+nav .logo { font-family: 'Pixelify Sans', monospace; font-size: 20px; font-weight: 700; color: var(--text); text-decoration: none; }
+nav .right { display: flex; gap: 8px; align-items: center; }
+.lang button {
+	background: var(--panel2); color: var(--muted); border: 0; padding: 6px 10px; cursor: pointer;
+	font: 600 13px Inter, sans-serif; border-radius: 6px;
+}
+.lang button.on { background: var(--panel); color: var(--text); }
+.ghlink { color: var(--muted); font-size: 14px; text-decoration: none; }
+.ghlink:hover { color: var(--text); }
+
+.hero { text-align: center; padding: 48px 0 40px; }
+.cards { display: flex; justify-content: center; margin-bottom: 24px; height: 120px; }
+.card {
+	width: 78px; height: 110px; border-radius: 9px; border: 4px solid #fff; box-shadow: 0 8px 0 var(--shadow);
+	display: flex; align-items: center; justify-content: center; font: 700 34px 'Pixelify Sans', monospace; color: #fff;
+}
+.card.a { background: var(--red); transform: rotate(-10deg) translateX(10px); animation: bob 3s ease-in-out infinite; }
+.card.b { background: var(--blue); transform: rotate(10deg) translateX(-10px); animation: bob 3s ease-in-out infinite 1.5s; }
+@keyframes bob { 50% { margin-top: -8px; } }
+@media (prefers-reduced-motion: reduce) { .card.a, .card.b { animation: none; } }
+.hero h1 { font-size: clamp(40px, 8vw, 72px); margin: 0; line-height: 1.05; text-shadow: 0 4px 0 var(--shadow); }
+.hero h1 span { color: var(--red); }
+.hero p.tag { font-size: clamp(17px, 2.4vw, 21px); color: var(--muted); max-width: 640px; margin: 14px auto 28px; }
+.buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.btn {
+	display: inline-block; padding: 14px 26px; border-radius: 10px; text-decoration: none; color: #fff;
+	font: 700 19px 'Pixelify Sans', monospace; box-shadow: 0 5px 0 var(--shadow); transition: transform .1s, box-shadow .1s;
+}
+.btn:hover { transform: translateY(-2px); box-shadow: 0 7px 0 var(--shadow); }
+.btn:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--shadow); }
+.btn.red { background: var(--red); }
+.btn.blue { background: var(--blue); }
+.btn small { display: block; font: 400 12px Inter, sans-serif; opacity: .85; }
+.note { color: var(--muted); font-size: 14px; margin-top: 14px; }
+
+section { padding: 36px 0; }
+section h2 { font-size: 32px; margin: 0 0 20px; text-align: center; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+.tile { background: var(--panel); border-radius: 12px; padding: 18px; box-shadow: 0 5px 0 var(--shadow); border-top: 4px solid var(--c, var(--blue)); }
+.tile h3 { margin: 0 0 6px; font-size: 20px; }
+.tile p { margin: 0; color: var(--muted); font-size: 15px; }
+
+.steps { counter-reset: s; display: grid; gap: 12px; max-width: 760px; margin: 0 auto; }
+.step { background: var(--panel2); border-radius: 12px; padding: 14px 18px 14px 64px; position: relative; }
+.step::before {
+	counter-increment: s; content: counter(s); position: absolute; left: 16px; top: 14px; width: 34px; height: 34px;
+	border-radius: 8px; background: var(--gold); color: #3a2a06; font: 700 20px 'Pixelify Sans', monospace;
+	display: flex; align-items: center; justify-content: center;
+}
+.step b { color: var(--text); }
+.step p { margin: 0; color: var(--muted); }
+code { background: #172122; padding: 2px 6px; border-radius: 5px; color: var(--gold); font-size: 14px; word-break: break-all; }
+
+table { width: 100%; border-collapse: collapse; background: var(--panel2); border-radius: 12px; overflow: hidden; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid #23302f; font-size: 15px; }
+th { background: var(--panel); font-family: 'Pixelify Sans', monospace; font-size: 17px; }
+.jokers { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.joker { background: var(--purple); color: #fff; border-radius: 8px; padding: 6px 12px; font: 600 15px 'Pixelify Sans', monospace; box-shadow: 0 4px 0 var(--shadow); }
+
+details { background: var(--panel2); border-radius: 10px; padding: 12px 16px; margin-bottom: 10px; max-width: 760px; margin-left: auto; margin-right: auto; }
+summary { cursor: pointer; font-weight: 600; }
+details p { color: var(--muted); margin: 8px 0 0; }
+
+footer { text-align: center; color: var(--muted); font-size: 14px; padding: 36px 0 48px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 900px; margin: 0 auto; }
+@media (max-width: 720px) { .two { grid-template-columns: 1fr; } }
+.two h3 { text-align: center; margin: 0 0 12px; }
+
+[data-l] { display: none; }
+html[lang="en"] [data-l="en"], html[lang="ru"] [data-l="ru"] { display: revert; }
+</style>
+</head>
+<body>
+<div class="wrap">
+	<nav>
+		<a class="logo" href="#">Balatro Co-op</a>
+		<div class="right">
+			<a class="ghlink" href="https://github.com/Dallowin/balatro-coop">GitHub</a>
+			<div class="lang" role="group" aria-label="Language">
+				<button type="button" data-set="en">EN</button><button type="button" data-set="ru">RU</button>
+			</div>
+		</div>
+	</nav>
+
+	<header class="hero">
+		<div class="cards" aria-hidden="true"><div class="card a">A</div><div class="card b">K</div></div>
+		<h1>Balatro <span>Co-op</span></h1>
+		<p class="tag">
+			<span data-l="en">Two players, one run, one shared score against every blind. You win together and you lose together.</span>
+			<span data-l="ru">Двое игроков, один забег, общий счёт против каждого блайнда. Побеждаете вместе и проигрываете вместе.</span>
+		</p>
+		<div class="buttons">
+			<a class="btn red" href="https://github.com/Dallowin/balatro-coop/releases/latest">
+				<span data-l="en">Download</span><span data-l="ru">Скачать</span>
+				<small id="ver">&nbsp;</small>
+			</a>
+			<a class="btn blue" href="#install">
+				<span data-l="en">How to install</span><span data-l="ru">Как установить</span>
+				<small>Lovely · Steamodded · MultiplayerAPI</small>
+			</a>
+		</div>
+		<p class="note">
+			<span data-l="en">Unofficial fan mod for the PC version of Balatro. Early version: bugs happen.</span>
+			<span data-l="ru">Неофициальный фанатский мод для ПК-версии Balatro. Ранняя версия: баги бывают.</span>
+		</p>
+	</header>
+
+	<section>
+		<h2><span data-l="en">What's inside</span><span data-l="ru">Что внутри</span></h2>
+		<div class="grid">
+			<div class="tile" style="--c: var(--red)">
+				<h3><span data-l="en">Shared blind</span><span data-l="ru">Общий блайнд</span></h3>
+				<p data-l="en">Take turns playing hands. Your chips add up against one blind scaled for two.</p>
+				<p data-l="ru">Ходите руками по очереди. Фишки складываются против одного блайнда, усиленного под двоих.</p>
+			</div>
+			<div class="tile" style="--c: var(--blue)">
+				<h3><span data-l="en">Play via Steam</span><span data-l="ru">Игра через Steam</span></h3>
+				<p data-l="en">Invite a Steam friend in one click. No codes, no server: Steam connects you directly.</p>
+				<p data-l="ru">Позови друга из Steam в один клик. Без кодов и сервера: Steam соединяет вас напрямую.</p>
+			</div>
+			<div class="tile" style="--c: var(--gold)">
+				<h3><span data-l="en">Shared shop &amp; money</span><span data-l="ru">Общие лавка и деньги</span></h3>
+				<p data-l="en">One wallet, one shop, shared vouchers. Plan your build together.</p>
+				<p data-l="ru">Один кошелёк, одна лавка, общие ваучеры. Собираете билд вместе.</p>
+			</div>
+			<div class="tile" style="--c: var(--green)">
+				<h3><span data-l="en">See your partner</span><span data-l="ru">Видно напарника</span></h3>
+				<p data-l="en">Their hand and jokers on your screen, and every hand they play replayed with the full scoring animation.</p>
+				<p data-l="ru">Его рука и джокеры у тебя на экране, а каждая его рука повторяется с полной анимацией подсчёта.</p>
+			</div>
+			<div class="tile" style="--c: var(--purple)">
+				<h3><span data-l="en">Team jokers</span><span data-l="ru">Командные джокеры</span></h3>
+				<p data-l="en">3 shared slots and 9 rare jokers that only work as a team.</p>
+				<p data-l="ru">3 общих слота и 9 редких джокеров, которые работают только в команде.</p>
+			</div>
+			<div class="tile" style="--c: var(--red)">
+				<h3><span data-l="en">Nobody carries alone</span><span data-l="ru">Никто не тащит один</span></h3>
+				<p data-l="en">Mult relay between turns, a 70% cap per player and resonance for matching ranks.</p>
+				<p data-l="ru">Передача множителя между ходами, потолок 70% на игрока и резонанс за одинаковые ранги.</p>
+			</div>
+			<div class="tile" style="--c: var(--blue)">
+				<h3><span data-l="en">Shared deck</span><span data-l="ru">Общая колода</span></h3>
+				<p data-l="en">Optional: 104 cards for two, every tarot and seal seen by both. Use tarots on your partner's cards.</p>
+				<p data-l="ru">По желанию: 104 карты на двоих, таро и печати видны обоим. Таро можно применять к картам напарника.</p>
+			</div>
+			<div class="tile" style="--c: var(--gold)">
+				<h3><span data-l="en">Your rules</span><span data-l="ru">Свои правила</span></h3>
+				<p data-l="en">Turns, synergy, difficulty, evil bosses, deck and stake. Plus a solo test mode to try it alone.</p>
+				<p data-l="ru">Ходы, синергия, сложность, злые боссы, колода и ставка. И тест в одиночку, чтобы попробовать одному.</p>
+			</div>
+		</div>
+	</section>
+
+	<section>
+		<h2><span data-l="en">Team jokers</span><span data-l="ru">Командные джокеры</span></h2>
+		<div class="jokers" data-l="en">
+			<span class="joker">Pass</span><span class="joker">Bridge</span><span class="joker">Echo</span><span class="joker">Double Strike</span><span class="joker">Chain</span><span class="joker">Contrast</span><span class="joker">Shared Hand</span><span class="joker">Support</span><span class="joker">Second Wind</span>
+		</div>
+		<div class="jokers" data-l="ru">
+			<span class="joker">Пас</span><span class="joker">Мост</span><span class="joker">Эхо</span><span class="joker">Двойной удар</span><span class="joker">Цепь</span><span class="joker">Контраст</span><span class="joker">Общая рука</span><span class="joker">Поддержка</span><span class="joker">Второе дыхание</span>
+		</div>
+	</section>
+
+	<section id="install">
+		<h2><span data-l="en">Installation</span><span data-l="ru">Установка</span></h2>
+		<table>
+			<tr><th data-l="en">You need</th><th data-l="ru">Нужно</th><th data-l="en">Get it</th><th data-l="ru">Где взять</th></tr>
+			<tr><td>Lovely Injector</td><td><a href="https://github.com/ethangreen-dev/lovely-injector/releases">github.com/ethangreen-dev/lovely-injector</a></td></tr>
+			<tr><td>Steamodded</td><td><a href="https://github.com/Steamodded/smods/releases">github.com/Steamodded/smods</a></td></tr>
+			<tr><td>MultiplayerAPI</td><td><a href="https://github.com/Balatro-Multiplayer/BalatroMultiplayerAPI/releases">github.com/Balatro-Multiplayer/BalatroMultiplayerAPI</a></td></tr>
+			<tr><td>Balatro Co-op</td><td><a href="https://github.com/Dallowin/balatro-coop/releases/latest">github.com/Dallowin/balatro-coop</a></td></tr>
+		</table>
+		<br>
+		<div class="steps">
+			<div class="step">
+				<p data-l="en"><b>Lovely:</b> put its <code>.dll</code> next to <code>Balatro.exe</code> (Steam → right-click Balatro → Manage → Browse local files).</p>
+				<p data-l="ru"><b>Lovely:</b> положи его <code>.dll</code> рядом с <code>Balatro.exe</code> (Steam → правой кнопкой по Balatro → Управление → Просмотреть локальные файлы).</p>
+			</div>
+			<div class="step">
+				<p data-l="en"><b>Mods folder:</b> Win+R → <code>%AppData%\Balatro\Mods</code> (create <code>Mods</code> if it's missing).</p>
+				<p data-l="ru"><b>Папка модов:</b> Win+R → <code>%AppData%\Balatro\Mods</code> (если папки <code>Mods</code> нет — создай).</p>
+			</div>
+			<div class="step">
+				<p data-l="en"><b>Steamodded and MultiplayerAPI</b> go into <code>Mods</code>. Remove the old <b>Multiplayer</b> mod if you have it.</p>
+				<p data-l="ru"><b>Steamodded и MultiplayerAPI</b> — в <code>Mods</code>. Старый мод <b>Multiplayer</b>, если есть, удали.</p>
+			</div>
+			<div class="step">
+				<p data-l="en"><b>Balatro Co-op:</b> extract the release zip into <code>Mods</code>, so you get <code>Mods\BalatroCoop\BalatroCoop.json</code>.</p>
+				<p data-l="ru"><b>Balatro Co-op:</b> распакуй зип из релиза в <code>Mods</code>, чтобы получилось <code>Mods\BalatroCoop\BalatroCoop.json</code>.</p>
+			</div>
+			<div class="step">
+				<p data-l="en"><b>Start Balatro from Steam.</b> Both players need the same Balatro Co-op version.</p>
+				<p data-l="ru"><b>Запусти Balatro через Steam.</b> У обоих должна быть одинаковая версия Balatro Co-op.</p>
+			</div>
+		</div>
+	</section>
+
+	<section>
+		<h2><span data-l="en">How to play</span><span data-l="ru">Как играть</span></h2>
+		<div class="two">
+			<div>
+				<h3 class="pix"><span data-l="en">Via Steam</span><span data-l="ru">Через Steam</span></h3>
+				<div class="steps">
+					<div class="step"><p data-l="en">Co-op menu → <b>Play via Steam</b> → <b>Invite</b> next to your friend.</p><p data-l="ru">Меню коопа → <b>Играть через Steam</b> → <b>Позвать</b> напротив друга.</p></div>
+					<div class="step"><p data-l="en">Your friend gets the invite and clicks <b>Accept</b>.</p><p data-l="ru">Другу приходит приглашение — он жмёт <b>Принять</b>.</p></div>
+					<div class="step"><p data-l="en">They click <b>Ready</b>, you click <b>Start</b>.</p><p data-l="ru">Он жмёт <b>Готов</b>, ты — <b>Старт</b>.</p></div>
+				</div>
+			</div>
+			<div>
+				<h3 class="pix"><span data-l="en">With a code</span><span data-l="ru">По коду</span></h3>
+				<div class="steps">
+					<div class="step"><p data-l="en"><b>Create lobby</b>: the code is copied to your clipboard.</p><p data-l="ru"><b>Создать лобби</b>: код сам скопируется.</p></div>
+					<div class="step"><p data-l="en">Your friend: <b>Join with code</b> and pastes it.</p><p data-l="ru">Друг: <b>Войти по коду</b> и вставляет его.</p></div>
+					<div class="step"><p data-l="en"><b>Ready</b>, then <b>Start</b>.</p><p data-l="ru"><b>Готов</b>, затем <b>Старт</b>.</p></div>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<section>
+		<h2>FAQ</h2>
+		<details>
+			<summary><span data-l="en">My friend doesn't see the invite</span><span data-l="ru">Друг не видит приглашение</span></summary>
+			<p data-l="en">You must be Steam friends, both with Balatro started from Steam and the same mod version. Your friend can open "Play via Steam" — invites are listed at the top.</p>
+			<p data-l="ru">Вы должны быть друзьями в Steam, у обоих Balatro запущена через Steam и одинаковая версия мода. Друг может сам открыть «Играть через Steam» — приглашения вверху списка.</p>
+		</details>
+		<details>
+			<summary><span data-l="en">The Start button is grey</span><span data-l="ru">Кнопка «Старт» серая</span></summary>
+			<p data-l="en">The second player hasn't joined, isn't ready, or has a different mod version (the lobby shows both versions).</p>
+			<p data-l="ru">Второй игрок не зашёл, не нажал «Готов» или у него другая версия мода (лобби показывает обе версии).</p>
+		</details>
+		<details>
+			<summary><span data-l="en">Does it work on Mac, Linux or mobile?</span><span data-l="ru">Работает на Mac, Linux, телефоне?</span></summary>
+			<p data-l="en">It's tested on Windows. Mobile versions can't load mods.</p>
+			<p data-l="ru">Проверено на Windows. Мобильные версии моды не поддерживают.</p>
+		</details>
+		<details>
+			<summary><span data-l="en">I found a bug</span><span data-l="ru">Нашёл баг</span></summary>
+			<p data-l="en">Open an <a href="https://github.com/Dallowin/balatro-coop/issues">issue</a> and attach the log from <code>%AppData%\Balatro\Mods\lovely\log</code>.</p>
+			<p data-l="ru">Создай <a href="https://github.com/Dallowin/balatro-coop/issues">issue</a> и приложи лог из <code>%AppData%\Balatro\Mods\lovely\log</code>.</p>
+		</details>
+	</section>
+
+	<footer>
+		<p>
+			<span data-l="en">Built on Lovely, Steamodded and MultiplayerAPI. Balatro by LocalThunk / Playstack. Unofficial fan mod, GPL-3.0.</span>
+			<span data-l="ru">Построен на Lovely, Steamodded и MultiplayerAPI. Balatro — LocalThunk / Playstack. Неофициальный фанатский мод, GPL-3.0.</span>
+		</p>
+		<p><a href="https://github.com/Dallowin/balatro-coop">github.com/Dallowin/balatro-coop</a></p>
+	</footer>
+</div>
+<script>
+(function () {
+	var root = document.documentElement;
+	function set(lang) {
+		root.lang = lang;
+		document.querySelectorAll('.lang button').forEach(function (b) {
+			b.classList.toggle('on', b.dataset.set === lang);
+		});
+		try { localStorage.setItem('lang', lang); } catch (e) {}
+	}
+	var saved = null;
+	try { saved = localStorage.getItem('lang'); } catch (e) {}
+	set(saved || ((navigator.language || '').toLowerCase().indexOf('ru') === 0 ? 'ru' : 'en'));
+	document.querySelectorAll('.lang button').forEach(function (b) {
+		b.addEventListener('click', function () { set(b.dataset.set); });
+	});
+	// show the latest release's version on the download button
+	fetch('https://api.github.com/repos/Dallowin/balatro-coop/releases/latest')
+		.then(function (r) { return r.ok ? r.json() : null; })
+		.then(function (rel) { if (rel && rel.tag_name) document.getElementById('ver').textContent = rel.tag_name; })
+		.catch(function () {});
+})();
+</script>
+</body>
+</html>

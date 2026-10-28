@@ -1,0 +1,71 @@
+# Balatro Co-op
+
+**Two players, one run, one shared score against every blind.**
+
+A co-op mode for [Balatro](https://store.steampowered.com/app/2379780/Balatro/): you and a friend play the same seed, take turns playing hands, and your chips add up against a single, tougher blind. You win together and you lose together.
+
+🌐 **Website:** https://dallowin.github.io/balatro-coop/ · 🇷🇺 [Читать по-русски](README_RU.md)
+
+> **Status:** early, playable, actively developed. Expect bugs. Please [report them](https://github.com/Dallowin/balatro-coop/issues).
+
+## Features
+
+- **Shared blind**: hands are played in turns (or simultaneously), scores add up, the requirement is scaled for two.
+- **Play via Steam**: invite a Steam friend who is running Balatro. No lobby code, no server, Steam handles the connection. Lobby codes through the Multiplayer server work too.
+- **Shared shop, money and vouchers**: you shop together and leave together; vouchers are shared (and 30% more expensive).
+- **Shared deck** (option): 104 cards for the two of you; card changes (tarots, seals, editions) are seen by both.
+- **See your partner**: their hand and jokers above yours, and their played hands replayed with the full scoring animation.
+- **Tarots on your partner's cards**.
+- **Team jokers**: 3 shared slots and 9 rare team jokers (Pass, Bridge, Echo, Double Strike, Chain, Contrast, Shared Hand, Support, Second Wind).
+- **Synergy so nobody carries alone**: a mult relay between turns, a 70% contribution cap per player, resonance for matching ranks.
+- **Lobby options**: shared or separate deck, alternating or simultaneous turns, synergy, difficulty, evil bosses, deck and stake.
+- **Solo test mode**: a mirror partner that replays your own moves, to try things out alone.
+- English and Russian.
+
+## Requirements
+
+Balatro on PC with these mods:
+
+| Mod | Where to get it |
+| --- | --- |
+| [Lovely Injector](https://github.com/ethangreen-dev/lovely-injector) | [Releases](https://github.com/ethangreen-dev/lovely-injector/releases) |
+| [Steamodded](https://github.com/Steamodded/smods) (1.0.0 beta or newer) | [Releases](https://github.com/Steamodded/smods/releases) |
+| [MultiplayerAPI](https://github.com/Balatro-Multiplayer/BalatroMultiplayerAPI) | [Releases](https://github.com/Balatro-Multiplayer/BalatroMultiplayerAPI/releases) |
+
+Remove the old **Multiplayer** mod (e.g. `multiplayer-0.5.5`) if you have it: it conflicts with MultiplayerAPI.
+
+**Both players need the same version of Balatro Co-op.** The lobby checks it and won't start otherwise.
+
+## Installation
+
+1. Install **Lovely**: put `version.dll` (or `winmm.dll`, depending on the release) next to `Balatro.exe`.
+   (Steam → right-click Balatro → Manage → Browse local files.)
+2. Open the mods folder: `%AppData%\Balatro\Mods` (create `Mods` if it doesn't exist).
+3. Put **Steamodded** and **MultiplayerAPI** there.
+4. Download `BalatroCoop-x.y.z.zip` from the [latest release](https://github.com/Dallowin/balatro-coop/releases/latest) and extract it into `Mods`, so you get `Mods\BalatroCoop\BalatroCoop.json`.
+5. Start Balatro from Steam.
+
+## How to play
+
+**Via Steam (easiest)**: both of you must be Steam friends with Balatro running.
+
+1. Open the Co-op menu → **Play via Steam** → **Invite** next to your friend.
+2. Your friend sees "… invites you to co-op" and clicks **Accept**.
+3. Your friend clicks **Ready**, you click **Start**.
+
+**With a lobby code**: **Create lobby** (the code is copied to your clipboard), your friend uses **Join with code**.
+
+The in-game **Rules** button explains everything; the host chooses the options in the lobby.
+
+## Reporting bugs
+
+Open an [issue](https://github.com/Dallowin/balatro-coop/issues) with what happened and, if possible, the log from `%AppData%\Balatro\Mods\lovely\log` (lines with `Coop` or `BalatroCoop`).
+
+## Credits
+
+- [Lovely Injector](https://github.com/ethangreen-dev/lovely-injector), [Steamodded](https://github.com/Steamodded/smods) and [MultiplayerAPI](https://github.com/Balatro-Multiplayer/BalatroMultiplayerAPI): Balatro Co-op is built on them.
+- Balatro by LocalThunk / Playstack. This is an unofficial fan mod.
+
+## License
+
+[GPL-3.0](LICENSE), like MultiplayerAPI, which it builds on.

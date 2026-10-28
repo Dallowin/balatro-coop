@@ -1,0 +1,20 @@
+{
+  "id": "BalatroCoop",
+  "name": "BalatroCoop",
+  "display_name": "Balatro Co-op",
+  "author": ["adil"],
+  "description": "Two players, same seed, one shared score against every blind.",
+  "prefix": "coop",
+  "main_file": "core.lua",
+  "priority": 0,
+  "badge_colour": "2E76FD",
+  "badge_text_colour": "FFFFFF",
+  "version": "0.10.0",
+  "dependencies": [
+    "Steamodded (>=1.0.0~BETA-1814a)",
+    "Lovely (>=0.8)",
+    "Balatro (>=1.0.1o)",
+    "MultiplayerAPI"
+  ],
+  "conflicts": ["Multiplayer"]
+}
