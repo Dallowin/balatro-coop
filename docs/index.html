@@ -97,6 +97,14 @@ code { background: #172122; padding: 2px 6px; border-radius: 5px; color: var(--g
 table { width: 100%; border-collapse: collapse; background: var(--panel2); border-radius: 12px; overflow: hidden; }
 th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid #23302f; font-size: 15px; }
 th { background: var(--panel); font-family: 'Pixelify Sans', monospace; font-size: 17px; }
+.sub { text-align: center; color: var(--muted); margin: -8px auto 22px; max-width: 640px; }
+.jgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 16px; }
+.jcard { background: var(--panel2); border-radius: 12px; padding: 16px 14px; text-align: center; box-shadow: 0 5px 0 var(--shadow); }
+.jcard img { image-rendering: pixelated; width: 142px; height: 190px; display: block; margin: 0 auto 10px; transition: transform .15s; }
+.jcard:hover img { transform: translateY(-6px) rotate(-2deg); }
+.jcard h3 { margin: 0 0 6px; font-size: 20px; color: #e4a6f2; }
+.jcard p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.45; }
+.jtag { display: inline-block; margin-top: 8px; font-size: 12px; color: var(--gold); border: 1px solid rgba(245,177,67,.5); border-radius: 6px; padding: 1px 7px; }
 .jokers { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
 .joker { background: var(--purple); color: #fff; border-radius: 8px; padding: 6px 12px; font: 600 15px 'Pixelify Sans', monospace; box-shadow: 0 4px 0 var(--shadow); }
 
@@ -173,8 +181,8 @@ html[lang="en"] [data-l="en"], html[lang="ru"] [data-l="ru"] { display: revert; 
 			</div>
 			<div class="tile" style="--c: var(--purple)">
 				<h3><span data-l="en">Team jokers</span><span data-l="ru">Командные джокеры</span></h3>
-				<p data-l="en">3 shared slots and 9 rare jokers that only work as a team.</p>
-				<p data-l="ru">3 общих слота и 9 редких джокеров, которые работают только в команде.</p>
+				<p data-l="en">3 shared slots and 9 rare jokers with their own art, that only work as a team.</p>
+				<p data-l="ru">3 общих слота и 9 редких джокеров со своей графикой, которые работают только в команде.</p>
 			</div>
 			<div class="tile" style="--c: var(--red)">
 				<h3><span data-l="en">Nobody carries alone</span><span data-l="ru">Никто не тащит один</span></h3>
@@ -194,13 +202,66 @@ html[lang="en"] [data-l="en"], html[lang="ru"] [data-l="ru"] { display: revert; 
 		</div>
 	</section>
 
-	<section>
+	<section id="jokers">
 		<h2><span data-l="en">Team jokers</span><span data-l="ru">Командные джокеры</span></h2>
-		<div class="jokers" data-l="en">
-			<span class="joker">Pass</span><span class="joker">Bridge</span><span class="joker">Echo</span><span class="joker">Double Strike</span><span class="joker">Chain</span><span class="joker">Contrast</span><span class="joker">Shared Hand</span><span class="joker">Support</span><span class="joker">Second Wind</span>
-		</div>
-		<div class="jokers" data-l="ru">
-			<span class="joker">Пас</span><span class="joker">Мост</span><span class="joker">Эхо</span><span class="joker">Двойной удар</span><span class="joker">Цепь</span><span class="joker">Контраст</span><span class="joker">Общая рука</span><span class="joker">Поддержка</span><span class="joker">Второе дыхание</span>
+		<p class="sub"><span data-l="en">Rare, expensive, and they sit in 3 shared slots: every team joker works for both of you.</span><span data-l="ru">Редкие и дорогие, лежат в 3 общих слотах: каждый командный джокер работает на вас обоих.</span></p>
+		<div class="jgrid">
+			<div class="jcard">
+				<img src="img/jokers/pass.png" width="142" height="190" alt="Pass" loading="lazy">
+				<h3><span data-l="en">Pass</span><span data-l="ru">Пас</span></h3>
+				<p data-l="en">Once per turn, give 1 selected card from your hand to your partner.</p>
+				<p data-l="ru">Раз в ход отдай напарнику 1 выбранную карту из руки.</p>
+				<span class="jtag"><span data-l="en">Shared deck only</span><span data-l="ru">Только с общей колодой</span></span>
+			</div>
+			<div class="jcard">
+				<img src="img/jokers/bridge.png" width="142" height="190" alt="Bridge" loading="lazy">
+				<h3><span data-l="en">Bridge</span><span data-l="ru">Мост</span></h3>
+				<p data-l="en">Copies your partner's rightmost Joker, like Blueprint. Passive effects too.</p>
+				<p data-l="ru">Копирует самого правого джокера напарника, как Чертёж. Пассивки тоже.</p>
+			</div>
+			<div class="jcard">
+				<img src="img/jokers/echo.png" width="142" height="190" alt="Echo" loading="lazy">
+				<h3><span data-l="en">Echo</span><span data-l="ru">Эхо</span></h3>
+				<p data-l="en">Your hand gets +Mult equal to 20% of your partner's last hand Mult.</p>
+				<p data-l="ru">Твоя рука получает +Множ. = 20% от множителя последней руки напарника.</p>
+			</div>
+			<div class="jcard">
+				<img src="img/jokers/double.png" width="142" height="190" alt="Double Strike" loading="lazy">
+				<h3><span data-l="en">Double Strike</span><span data-l="ru">Двойной удар</span></h3>
+				<p data-l="en">X3 Mult if you play the same poker hand your partner played this blind.</p>
+				<p data-l="ru">X3 Множ., если играешь ту же покерную руку, что напарник в этом блайнде.</p>
+			</div>
+			<div class="jcard">
+				<img src="img/jokers/chain.png" width="142" height="190" alt="Chain" loading="lazy">
+				<h3><span data-l="en">Chain</span><span data-l="ru">Цепь</span></h3>
+				<p data-l="en">Beat your partner's previous hand: +X0.25 Mult to the chain for both. A weaker hand resets it.</p>
+				<p data-l="ru">Перебил прошлую руку напарника — цепь даёт обоим +X0.25 Множ. Слабая рука её сбрасывает.</p>
+			</div>
+			<div class="jcard">
+				<img src="img/jokers/contrast.png" width="142" height="190" alt="Contrast" loading="lazy">
+				<h3><span data-l="en">Contrast</span><span data-l="ru">Контраст</span></h3>
+				<p data-l="en">X2.5 Mult if you play a different poker hand than your partner this blind.</p>
+				<p data-l="ru">X2.5 Множ., если играешь другую покерную руку, чем напарник в этом блайнде.</p>
+			</div>
+			<div class="jcard">
+				<img src="img/jokers/shared_hand.png" width="142" height="190" alt="Shared Hand" loading="lazy">
+				<h3><span data-l="en">Shared Hand</span><span data-l="ru">Общая рука</span></h3>
+				<p data-l="en">Once per blind, take a card from your partner's hand into yours.</p>
+				<p data-l="ru">Раз в блайнд забери карту из руки напарника себе.</p>
+				<span class="jtag"><span data-l="en">Shared deck only</span><span data-l="ru">Только с общей колодой</span></span>
+			</div>
+			<div class="jcard">
+				<img src="img/jokers/support.png" width="142" height="190" alt="Support" loading="lazy">
+				<h3><span data-l="en">Support</span><span data-l="ru">Опора</span></h3>
+				<p data-l="en">Your last hand of the blind gets +Chips equal to 25% of what your partner scored.</p>
+				<p data-l="ru">Последняя рука в блайнде получает +Фишки = 25% от очков напарника.</p>
+			</div>
+			<div class="jcard">
+				<img src="img/jokers/second_wind.png" width="142" height="190" alt="Second Wind" loading="lazy">
+				<h3><span data-l="en">Second Wind</span><span data-l="ru">Второе дыхание</span></h3>
+				<p data-l="en">Lost a blind but scored at least 75%? It counts as beaten. Once.</p>
+				<p data-l="ru">Проиграли блайнд, но набрали хотя бы 75%? Он засчитан. Один раз.</p>
+			</div>
 		</div>
 	</section>
 
