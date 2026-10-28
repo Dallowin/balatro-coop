@@ -1,5 +1,10 @@
 -- Team jokers: rare, expensive, and they sit in the shared team row
--- (domain/team.lua), working for both players. Art reuses vanilla sprites.
+-- (domain/team.lua), working for both players. Art: assets/*/team_jokers.png,
+-- one card per joker in this order.
+
+SMODS.Atlas({ key = 'team_jokers', path = 'team_jokers.png', px = 71, py = 95 })
+
+local ART = { pass = 0, bridge = 1, echo = 2, double = 3, chain = 4, contrast = 5, shared_hand = 6, support = 7, second_wind = 8 }
 
 SMODS.Rarity({
 	key = 'team',
@@ -12,8 +17,8 @@ SMODS.Rarity({
 })
 
 local function team_joker(def)
-	def.atlas = 'Joker'
-	def.prefix_config = { atlas = false } -- vanilla joker sheet
+	def.atlas = 'team_jokers'
+	def.pos = { x = ART[def.key], y = 0 }
 	def.rarity = 'coop_team'
 	def.coop_team = true
 	local needs_shared = def.needs_shared_deck
@@ -27,7 +32,6 @@ end
 team_joker({
 	key = 'pass',
 	needs_shared_deck = true,
-	pos = { x = 4, y = 5 },
 	cost = 10,
 	blueprint_compat = false,
 })
@@ -35,7 +39,6 @@ team_joker({
 -- Bridge: copies the ability of the partner's rightmost joker.
 team_joker({
 	key = 'bridge',
-	pos = { x = 0, y = 3 },
 	cost = 15,
 	blueprint_compat = false,
 	loc_vars = function(self, info_queue, card)
@@ -54,14 +57,13 @@ team_joker({
 	end,
 })
 
--- Echo: your hand gets +Mult equal to 20% of the partner's last hand's Mult.
+-- Echo: your hand gets +Mult equal to 35% of the partner's last hand's Mult.
 team_joker({
 	key = 'echo',
-	pos = { x = 8, y = 9 },
 	cost = 12,
 	blueprint_compat = true,
 	loc_vars = function(self, info_queue, card)
-		return { vars = { 20, COOP.TEAM.echo_bonus or 0 } }
+		return { vars = { math.floor(COOP.ECHO_SHARE * 100), COOP.TEAM.echo_bonus or 0 } }
 	end,
 	calculate = function(self, card, context)
 		if context.joker_main then
@@ -79,7 +81,6 @@ team_joker({
 -- Double Strike: X3 Mult if you play the same poker hand your partner just played.
 team_joker({
 	key = 'double',
-	pos = { x = 2, y = 11 },
 	cost = 14,
 	blueprint_compat = true,
 	config = { extra = { xmult = 3 } },
@@ -102,7 +103,6 @@ team_joker({
 -- both of you; a weaker hand resets it to X1. Updated in COOP.TEAM.after_my_hand.
 team_joker({
 	key = 'chain',
-	pos = { x = 9, y = 5 },
 	cost = 13,
 	blueprint_compat = true,
 	loc_vars = function(self, info_queue, card)
@@ -119,7 +119,6 @@ team_joker({
 -- last one this blind.
 team_joker({
 	key = 'contrast',
-	pos = { x = 3, y = 6 },
 	cost = 12,
 	blueprint_compat = true,
 	config = { extra = { xmult = 2.5 } },
@@ -140,7 +139,6 @@ team_joker({
 team_joker({
 	key = 'shared_hand',
 	needs_shared_deck = true,
-	pos = { x = 6, y = 2 },
 	cost = 13,
 	blueprint_compat = false,
 })
@@ -149,7 +147,6 @@ team_joker({
 -- partner scored this blind.
 team_joker({
 	key = 'support',
-	pos = { x = 7, y = 4 },
 	cost = 12,
 	blueprint_compat = true,
 	config = { extra = { percent = 25 } },
@@ -170,7 +167,6 @@ team_joker({
 -- beaten, once. Both players hold it, so both are saved and both lose it.
 team_joker({
 	key = 'second_wind',
-	pos = { x = 8, y = 6 },
 	cost = 15,
 	blueprint_compat = false,
 	config = { extra = { percent = 75 } },
@@ -199,6 +195,7 @@ function COOP.TEAM.bridge_target()
 		return nil
 	end
 	local last = p.jokers:match('([^;]+)$')
+	local id = last and tonumber(last:match('^([^|]*)'))
 	local key = last and last:match('^[^|]*|[^|]*|([^|]*)')
 	if not key or not G.P_CENTERS[key] or key == 'j_coop_bridge' then
 		return nil
@@ -223,5 +220,7 @@ function COOP.TEAM.bridge_target()
 			return nil
 		end
 	end
+	-- what that joker has built up on the partner's side (X Mult, +Chips...)
+	COOP.PV.apply_joker_state_to(TM.bridge_card, id)
 	return TM.bridge_card
 end

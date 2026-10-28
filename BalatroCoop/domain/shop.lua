@@ -162,6 +162,8 @@ local function describe(card, area_name)
 		set = center.set,
 		edition = card.edition and card.edition.key or '',
 		booster_pos = card.ability.booster_pos or 0,
+		-- made free by a tag (Uncommon/Rare/Coupon...): the host's tag decides
+		couponed = card.ability.couponed and 1 or 0,
 	}
 end
 
@@ -174,7 +176,7 @@ function S.host_update()
 		end
 		local d = describe(card, area_name)
 		items[#items + 1] = d
-		parts[#parts + 1] = d.sid .. d.key .. d.edition
+		parts[#parts + 1] = d.sid .. d.key .. d.edition .. d.couponed
 	end)
 	table.sort(parts)
 	local signature = table.concat(parts, ',') .. '|' .. tostring(G.GAME.current_round.reroll_cost)
@@ -250,6 +252,10 @@ local function create_mirror(item)
 		card:set_cost()
 	end
 	card.coop_sid = item.sid
+	if item.couponed == 1 then
+		card.ability.couponed = true
+		card:set_cost()
+	end
 	card:start_materialize()
 	area:emplace(card)
 	if item.area == 'shop_vouchers' then
@@ -310,6 +316,14 @@ function S.guest_update()
 			now[sid] = true
 		end
 	end
+	-- a tag can make a card free after it was listed: keep the price in step
+	each_shop_card(function(card)
+		local item = card.coop_sid and wanted[card.coop_sid]
+		if item and (item.couponed == 1) ~= (card.ability.couponed and true or false) then
+			card.ability.couponed = item.couponed == 1 or nil
+			card:set_cost()
+		end
+	end)
 	S.present = now
 end
 
@@ -319,12 +333,35 @@ end
 
 -- Per frame ---------------------------------------------------------------
 
+-- A bought card must leave the shop's list. If a purchase ever leaves it
+-- listed there too (it already sits in our jokers), it would be drawn on its
+-- old spot as an unbuyable ghost: drop such entries.
+local function sweep_ghosts()
+	for _, name in ipairs(AREAS) do
+		local area = G[name]
+		local swept = false
+		for i = #(area and area.cards or {}), 1, -1 do
+			local c = area.cards[i]
+			if not c or c.removed or c.area ~= area then
+				table.remove(area.cards, i)
+				swept = true
+				COOP.debug('shop: dropped a ghost card from %s (%s)', name, c and c.config and c.config.center and c.config.center.key or '?')
+			end
+		end
+		if swept then
+			area:set_ranks()
+			area:align_cards()
+		end
+	end
+end
+
 function S.update()
 	if not shop_exists() then
 		S.present = {}
 		S.last_sent = nil
 		return
 	end
+	sweep_ghosts()
 	if is_host() then
 		if S.pending_reroll and shop_ready() and not G.CONTROLLER.locked then
 			S.pending_reroll = false

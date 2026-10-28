@@ -6,6 +6,9 @@
 --   'play'    the cards just played  -> moved to a partner play area
 --   'discard' the cards just discarded -> dissolve
 --   'step'    every scoring popup (+Mult, X2, $3...) -> replayed on our copies
+--   'joker_state' what each joker has built up (its ability table: X Mult,
+--             +Chips, counters, stickers) -> put into our copies, so their
+--             descriptions show the partner's real numbers
 --
 -- Copies are display-only and live in their own CardAreas, never in G.hand
 -- or G.jokers, so no joker or game rule ever counts them. Cards are matched
@@ -27,6 +30,8 @@ function PV.reset()
 	PV.gone = {} -- id -> time it was played/discarded, ignored in snapshots for a moment
 	PV.play_pending = false
 	PV.last_sent = nil
+	PV.last_jokers_sent = nil
+	PV.joker_state = {} -- partner joker id -> ability values
 	PV.send_timer = 0
 end
 
@@ -68,6 +73,109 @@ function PV.update_send(dt)
 	if sig ~= PV.last_sent then
 		PV.last_sent = sig
 		COOP.send('state', snap)
+	end
+	PV.send_joker_state()
+end
+
+-- Joker values ---------------------------------------------------------------
+
+-- A JSON-safe copy of an ability table: numbers, strings, booleans and nested
+-- tables only, number keys as '@<n>' (JSON objects can't mix key types).
+local function plain(v, depth)
+	local t = type(v)
+	if t == 'number' then
+		return (v == v and v ~= math.huge and v ~= -math.huge) and v or nil
+	elseif t == 'string' or t == 'boolean' then
+		return v
+	elseif t == 'table' and depth < 3 then
+		local out = {}
+		for k, x in pairs(v) do
+			local key = type(k) == 'number' and ('@' .. k) or type(k) == 'string' and k or nil
+			local px = key and plain(x, depth + 1)
+			if px ~= nil then
+				out[key] = px
+			end
+		end
+		return out
+	end
+	return nil
+end
+
+local function restore(v)
+	if type(v) ~= 'table' then
+		return v
+	end
+	local out = {}
+	for k, x in pairs(v) do
+		local n = type(k) == 'string' and k:match('^@(%-?%d+)$')
+		out[n and tonumber(n) or k] = restore(x)
+	end
+	return out
+end
+
+-- stable text of a value, to notice changes
+local function signature(v)
+	if type(v) ~= 'table' then
+		return tostring(v)
+	end
+	local keys = {}
+	for k in pairs(v) do
+		keys[#keys + 1] = k
+	end
+	table.sort(keys)
+	local parts = {}
+	for _, k in ipairs(keys) do
+		parts[#parts + 1] = k .. '=' .. signature(v[k])
+	end
+	return '{' .. table.concat(parts, ',') .. '}'
+end
+
+function PV.send_joker_state()
+	local data, parts = {}, {}
+	for _, card in ipairs(G.jokers.cards) do
+		local ab = plain(card.ability, 0) or {}
+		ab._debuff = card.debuff and true or false
+		data[#data + 1] = { id = card.sort_id, ab = ab }
+		parts[#parts + 1] = card.sort_id .. signature(ab)
+	end
+	local sig = table.concat(parts, ';')
+	if sig ~= PV.last_jokers_sent then
+		PV.last_jokers_sent = sig
+		COOP.send('joker_state', { data = data })
+	end
+end
+
+local function apply_joker_state(card)
+	local ab = card and PV.joker_state and PV.joker_state[card.coop_id]
+	if not ab then
+		return
+	end
+	for k, v in pairs(ab) do
+		if k == '_debuff' then
+			card.debuff = v and true or false
+		else
+			card.ability[k] = restore(v)
+		end
+	end
+end
+
+-- Bridge's hidden copy of a partner joker gets the same values.
+function PV.apply_joker_state_to(card, id)
+	if card then
+		card.coop_id = id
+		apply_joker_state(card)
+	end
+end
+
+function PV.on_partner_joker_state(data)
+	PV.joker_state = {}
+	for _, e in ipairs(data) do
+		if type(e) == 'table' and tonumber(e.id) and type(e.ab) == 'table' then
+			PV.joker_state[tonumber(e.id)] = e.ab
+		end
+	end
+	for _, card in pairs(PV.joker_cards or {}) do
+		apply_joker_state(card)
 	end
 end
 
@@ -233,12 +341,14 @@ local function create_areas()
 
 	-- the 'hand' layout spreads cards over max(#cards, card_limit) slots: 8 keeps
 	-- a short hand bunched in the middle like a real hand
-	PV.hand_area = CardArea(x, y, hand_w, hand_h, { card_limit = 8, type = 'hand', highlight_limit = 0, no_card_count = true })
+	-- fixed_limit: Steamodded must not run its slot bookkeeping on these copies
+	-- (an area made while a tarot is being used never got it set up: crash)
+	PV.hand_area = CardArea(x, y, hand_w, hand_h, { card_limit = 8, type = 'hand', highlight_limit = 0, no_card_count = true, fixed_limit = true })
 	PV.joker_area = CardArea(joker_x, y + (hand_h - G.CARD_H * JOKER_SCALE) / 2, math.max(right - joker_x, G.CARD_W * JOKER_SCALE), G.CARD_H * JOKER_SCALE,
 		-- a real joker row: cards side by side (overlapping only past 5), hover shows the description
-		{ card_limit = 5, type = 'joker', highlight_limit = 0, no_card_count = true })
+		{ card_limit = 5, type = 'joker', highlight_limit = 0, no_card_count = true, fixed_limit = true })
 	PV.play_area = CardArea(G.play.T.x, G.play.T.y, G.play.T.w, G.CARD_H * PLAY_SCALE,
-		{ card_limit = 5, type = 'play', highlight_limit = 0 }) -- 5 slots like G.play: 10 squeezed the cards together
+		{ card_limit = 5, type = 'play', highlight_limit = 0, fixed_limit = true }) -- 5 slots like G.play: 10 squeezed the cards together
 
 	-- tarot targets sit a bit higher than the partner's own selection
 	local align_ref = PV.hand_area.align_cards
@@ -360,6 +470,7 @@ function PV.update_display()
 		-- look only: a click would select the copy and offer to sell it
 		PV.joker_cards = sync(PV.joker_area, joker_items, JOKER_SCALE, function(card)
 			card.click = function() end
+			apply_joker_state(card)
 		end)
 	end
 end
@@ -508,7 +619,80 @@ end
 
 PV.replaying = false
 
+-- Live HUD -----------------------------------------------------------------------
+--
+-- While we score a hand, what our HUD shows (hand, level, chips, mult) is sent
+-- several times a second, as it changes. The partner puts it straight into
+-- their HUD with a non-blockable update, so it never waits behind other
+-- animations: they watch our chips x mult count up as it happens.
+
+local LIVE_EVERY = 0.05
+
+function PV.stream_live(dt)
+	PV.live_timer = (PV.live_timer or 0) + dt
+	if PV.live_timer < LIVE_EVERY then
+		return
+	end
+	PV.live_timer = 0
+	if G.STATE ~= G.STATES.HAND_PLAYED or not G.GAME.current_round then
+		if PV.live_last then
+			-- our hand is over: clear it from the partner's HUD too
+			COOP.send('live', { name = '', level = 0, chips = 0, mult = 0, total = 0 })
+		end
+		PV.live_last = nil
+		return
+	end
+	local h = G.GAME.current_round.current_hand
+	local played = G.GAME.last_hand_played and G.GAME.hands[G.GAME.last_hand_played]
+	local live = {
+		name = tostring(h.handname or ''),
+		level = played and tonumber(played.level) or 0,
+		chips = tonumber(h.chips) or 0,
+		mult = tonumber(h.mult) or 0,
+		-- the hand's total, shown in place of the hand name once it's counted
+		total = tonumber(h.chip_total) or 0,
+	}
+	local sig = live.name .. '|' .. live.level .. '|' .. live.chips .. '|' .. live.mult .. '|' .. live.total
+	if sig ~= PV.live_last then
+		PV.live_last = sig
+		COOP.send('live', live)
+		PV.ht_sent = (PV.ht_sent or 0) + 1
+	end
+end
+
+function PV.on_partner_live(p)
+	PV.ht_recv = (PV.ht_recv or 0) + 1
+	if p.name == '' and p.chips == 0 and p.mult == 0 and p.total == 0 then
+		-- their hand is over: clear it, unless we are scoring or picking cards ourselves
+		if G.STATE ~= G.STATES.HAND_PLAYED and #(G.hand and G.hand.highlighted or {}) == 0 then
+			pcall(update_hand_text, { immediate = true, delay = 0, nopulse = true },
+				{ handname = '', level = '', chips = 0, mult = 0, chip_total = 0 })
+		end
+		return
+	end
+	if p.total == 0 and (G.GAME.current_round.current_hand.chip_total or 0) ~= 0 then
+		-- the total counted down to nothing: back to the hand name, like theirs
+		G.GAME.current_round.current_hand.chip_total = 0
+	end
+	PV.replaying = true
+	local ok, err = pcall(update_hand_text, { immediate = true, delay = 0 }, {
+		handname = p.name ~= '' and p.name or nil,
+		level = p.level > 0 and p.level or nil,
+		chips = p.chips,
+		mult = p.mult,
+		chip_total = p.total > 0 and p.total or nil,
+	})
+	PV.replaying = false
+	if not ok then
+		sendWarnMessage('live hud failed: ' .. tostring(err), COOP.id)
+	end
+end
+
 function PV.capture_hand_text(config, vals)
+	-- superseded by the live HUD stream (PV.stream_live); kept for counting only
+	if true then
+		return
+	end
 	-- only our real scoring: previews while we pick cards would overwrite the
 	-- partner's own HUD while they are choosing theirs
 	if PV.replaying or not COOP.is_active() or not vals or G.STATE ~= G.STATES.HAND_PLAYED then
@@ -609,7 +793,18 @@ end
 
 function PV.update(dt)
 	PV.update_send(dt)
+	PV.stream_live(dt)
 	PV.update_display()
+end
+
+-- Unstick: forget a partner hand that never finished on our board.
+function PV.clear_stuck_play()
+	PV.play_pending = false
+	if PV.play_area then
+		for i = #PV.play_area.cards, 1, -1 do
+			destroy(PV.play_area.cards[i])
+		end
+	end
 end
 
 -- True while the partner's played hand is on our board. Gives up after 15s

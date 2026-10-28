@@ -6,12 +6,13 @@ local code_ref = { text = '' }
 
 local PANEL = { 0, 0, 0, 0.55 }
 
+-- col = true: buttons in one row sit side by side instead of stacking
 local function button(id, label, colour, w, scale)
-	return UIBox_button({ button = id, label = { label }, minw = w or 2.6, minh = 0.65, scale = scale or 0.45, colour = colour })
+	return UIBox_button({ button = id, label = { label }, minw = w or 2.6, minh = 0.65, scale = scale or 0.45, colour = colour, col = true })
 end
 
 local function disabled_button(label, w)
-	return UIBox_button({ button = 'coop_noop', label = { label }, minw = w or 2.6, minh = 0.65, scale = 0.42, colour = G.C.UI.BACKGROUND_INACTIVE })
+	return UIBox_button({ button = 'coop_noop', label = { label }, minw = w or 2.6, minh = 0.65, scale = 0.42, colour = G.C.UI.BACKGROUND_INACTIVE, col = true })
 end
 G.FUNCS.coop_noop = function() end
 
@@ -309,7 +310,7 @@ function COOP.register_pages()
 		key = 'coop_main_menu',
 		category = 'mod_menu',
 		build = function(self)
-			MPAPI.set_logo_offset(0, true)
+			MPAPI.set_logo_offset(-10, true) -- the logo would sit on top of the panel
 			return root({
 				row({ text(localize('k_coop_title'), 0.8, G.C.FILTER) }),
 				row({ text(localize('k_coop_tagline'), 0.35) }),
@@ -348,6 +349,9 @@ function COOP.register_pages()
 				else
 					actions[#actions + 1] = button('coop_ready', localize('k_coop_ready'), G.C.GREEN)
 				end
+			end
+			if lobby.coop_steam and lobby.is_host and not COOP.SL.connected() then
+				actions[#actions + 1] = button('coop_steam_overlay', localize('k_coop_steam_invite_any'), G.C.GREEN, 3.4)
 			end
 			actions[#actions + 1] = button('coop_rules', localize('k_coop_rules'), G.C.ORANGE, 2)
 			actions[#actions + 1] = button('coop_chat_open', localize('k_coop_chat'), G.C.SECONDARY_SET.Planet, 2)

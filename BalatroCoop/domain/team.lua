@@ -6,6 +6,7 @@
 -- so per-hand counters (Echo) are tracked per player.
 
 COOP.TEAM = COOP.TEAM or {}
+COOP.ECHO_SHARE = 0.35 -- Echo: this much of the partner's last hand Mult
 local TM = COOP.TEAM
 
 TM.SLOTS = 3
@@ -56,6 +57,13 @@ local function ensure_area()
 	local y = G.jokers.T.y + G.jokers.T.h + 0.45
 	local w = math.max(G.TILE_W - x - 0.3, G.CARD_W * SCALE * 2)
 	G.coop_team = CardArea(x, y, w, G.CARD_H * SCALE, { card_limit = TM.SLOTS, type = 'joker', highlight_limit = 1 })
+	-- Steamodded fills these on its first update unless a tarot is being used
+	-- right then; it then reads them anyway (crash). Start them off ourselves.
+	local limits = G.coop_team.config.card_limits
+	if limits then
+		limits.extra_slots = limits.extra_slots or 0
+		limits.extra_slots_used = limits.extra_slots_used or 0
+	end
 	return G.coop_team
 end
 
@@ -151,7 +159,7 @@ end
 -- Echo: the partner's final Mult feeds our next hand.
 function TM.on_partner_mult(mult)
 	if TM.has('j_coop_echo') and type(mult) == 'number' and mult > 0 then
-		TM.echo_bonus = math.floor(mult * 0.2)
+		TM.echo_bonus = math.floor(mult * COOP.ECHO_SHARE)
 	end
 end
 

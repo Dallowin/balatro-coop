@@ -11,14 +11,15 @@ A co-op mode for [Balatro](https://store.steampowered.com/app/2379780/Balatro/):
 ## Features
 
 - **Shared blind**: hands are played in turns (or simultaneously), scores add up, the requirement is scaled for two.
-- **Play via Steam**: invite a Steam friend who is running Balatro. No lobby code, no server, Steam handles the connection. Lobby codes through the Multiplayer server work too.
+- **Play via Steam**: invite any Steam friend, even one who isn't playing: they get the invite in Steam chat and Balatro starts right into your lobby. No lobby code, no server. Lobby codes through the Multiplayer server work too.
+- **Casino in the shop**: slots with joker reels (Blueprint is wild, x100 jackpot) and blackjack with real cards and casino rules, for your shared money.
 - **Shared shop, money and vouchers**: you shop together and leave together; vouchers are shared (and 30% more expensive).
 - **Shared deck** (option): 104 cards for the two of you; card changes (tarots, seals, editions) are seen by both.
-- **See your partner**: their hand and jokers above yours, and their played hands replayed with the full scoring animation.
+- **See your partner**: their hand and jokers above yours (with their jokers' real values), and their chips x mult counting up live in your HUD.
 - **Tarots on your partner's cards**.
-- **Team jokers**: 3 shared slots and 9 rare team jokers (Pass, Bridge, Echo, Double Strike, Chain, Contrast, Shared Hand, Support, Second Wind).
-- **Synergy so nobody carries alone**: a mult relay between turns, a 70% contribution cap per player, resonance for matching ranks.
-- **Lobby options**: shared or separate deck, alternating or simultaneous turns, synergy, difficulty, evil bosses, deck and stake.
+- **Team jokers**: 3 shared slots and 9 rare team jokers with their own art (Pass, Bridge, Echo, Double Strike, Chain, Contrast, Shared Hand, Support, Second Wind).
+- **Optional rules**: resonance (the more evenly you both score in a blind, the bigger an XMult, up to X1.5, whatever your builds) and a 70% per-player share cap. Both off by default.
+- **Lobby options**: shared or separate deck, alternating or simultaneous turns, resonance, share cap, difficulty, evil bosses, deck and stake.
 - **Solo test mode**: a mirror partner that replays your own moves, to try things out alone.
 - English and Russian.
 

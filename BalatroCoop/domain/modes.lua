@@ -10,7 +10,8 @@ local MO = COOP.MODES
 MO.OPTIONS = {
 	{ key = 'deck', values = { 'shared', 'separate' } },
 	{ key = 'turns', values = { 'alternate', 'together' } },
-	{ key = 'synergy', values = { 'full', 'no_cap', 'off' } },
+	{ key = 'resonance', values = { 'off', 'on' } },
+	{ key = 'share_cap', values = { 'off', 'on' } },
 	{ key = 'difficulty', values = { 'normal', 'easy', 'hard', 'insane' } },
 	{ key = 'bosses', values = { 'normal', 'evil' } },
 	{ key = 'back', values = { 'b_red', 'b_blue', 'b_yellow', 'b_green', 'b_black', 'b_magic', 'b_nebula', 'b_ghost', 'b_abandoned', 'b_checkered', 'b_zodiac', 'b_painted', 'b_anaglyph', 'b_plasma', 'b_erratic' } },
@@ -69,10 +70,10 @@ function MO.on(feature)
 		return MO.get('deck') == 'shared'
 	elseif feature == 'alternate_turns' then
 		return MO.get('turns') == 'alternate'
-	elseif feature == 'relay' or feature == 'resonance' then
-		return MO.get('synergy') ~= 'off'
+	elseif feature == 'resonance' then
+		return MO.get('resonance') == 'on'
 	elseif feature == 'share_cap' then
-		return MO.get('synergy') == 'full'
+		return MO.get('share_cap') == 'on'
 	elseif feature == 'evil_bosses' then
 		return MO.get('bosses') == 'evil'
 	end

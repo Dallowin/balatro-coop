@@ -44,6 +44,7 @@ load('net/steam.lua')
 load('net/steam_lobby.lua')
 load('ui/partner_view.lua')
 load('ui/chat.lua')
+load('ui/casino.lua')
 load('ui/status.lua')
 load('ui/menus.lua')
 -- SMODS objects must be registered while mods load
@@ -86,7 +87,7 @@ function COOP.calculate(self, context)
 			return { message = localize('k_saved_ex'), saved = 'ph_mr_bones', colour = G.C.RED }
 		end
 	end
-	if COOP.is_active() and COOP.MODES.on('relay') then
+	if COOP.is_active() and COOP.MODES.on('resonance') then
 		return COOP.SYN.calculate(context)
 	end
 end
@@ -143,7 +144,8 @@ local MESSAGES = {
 	chat = { name = STR, text = STR },
 	take_card = { uid = STR },
 	take_reject = { uid = STR },
-	ready_blind = { round = NUM, hands_left = NUM, played = NUM, total = NUM },
+	ready_blind = { round = NUM, hands_left = NUM, played = NUM, total = NUM, turn = NUM },
+	unstick = { round = NUM },
 	state = { hand = STR, jokers = STR, hands_left = NUM, discards_left = NUM },
 	play = { cards = STR },
 	discard = { ids = STR },
@@ -155,6 +157,8 @@ local MESSAGES = {
 	blind_choice = { action = STR, round = NUM, on_deck = STR },
 	blind_request = { action = STR, round = NUM, on_deck = STR },
 	hello = { version = STR },
+	live = { name = STR, level = NUM, chips = NUM, mult = NUM, total = NUM },
+	joker_state = { data = TBL },
 	meta = { data = TBL },
 	ready = { ready = 'boolean' },
 	start = { seed = STR },
@@ -166,7 +170,6 @@ local HANDLERS = {
 	score = function(p)
 		COOP.SB.on_partner_report(p.round, p.total, p.hands_left, p.hand, p.played)
 		COOP.TEAM.on_partner_mult(p.mult)
-		COOP.SYN.on_partner_mult(p.mult)
 		if p.hand ~= '' then
 			COOP.STATUS.last_partner = { hand = p.hand, score = COOP.TEAM.partner_last_score or 0, mult = p.mult }
 		end
@@ -249,7 +252,10 @@ local HANDLERS = {
 		COOP.TAROT.on_partner_use(p.key, p.ids)
 	end,
 	ready_blind = function(p)
-		COOP.SB.on_partner_ready(p.round, p.hands_left, p.played, p.total)
+		COOP.SB.on_partner_ready(p.round, p.hands_left, p.played, p.total, p.turn)
+	end,
+	unstick = function(p)
+		COOP.SB.on_partner_unstick(p.round)
 	end,
 	state = function(p)
 		COOP.PV.on_partner_state(p)
@@ -274,6 +280,12 @@ local HANDLERS = {
 	end,
 	blind_choice = function(p)
 		COOP.FLOW.on_partner_choice(p.action, p.round, p.on_deck)
+	end,
+	live = function(p)
+		COOP.PV.on_partner_live(p)
+	end,
+	joker_state = function(p)
+		COOP.PV.on_partner_joker_state(p.data)
 	end,
 	blind_request = function(p)
 		COOP.FLOW.on_partner_request(p.action, p.round, p.on_deck)
@@ -651,6 +663,7 @@ MPAPI.on_loaded(function()
 		step('shop', COOP.SHOP.update)
 		step('partner view', COOP.PV.update, dt)
 		step('partner tarot', COOP.TAROT.update)
+		step('casino', COOP.CASINO.update)
 		step('shared deck', COOP.DECK.update, dt)
 		step('team jokers', COOP.TEAM.update)
 		step('team panel', COOP.STATUS.update)

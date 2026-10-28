@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.11.0
+
+### New
+- **Casino**: a "Casino" button in the shop opens a scene of its own (the shop slides away, like for a pack). Real, shared money, a bet you choose.
+  - **Slots** with joker reels: 9 jokers, 14 combos, Blueprint is wild, a x100 jackpot for three Golden Jokers. A scrollable payout table shows every combo with its odds (about 92% paid back).
+  - **Blackjack** with real cards and casino rules: 6-deck shoe, dealer stands on 17 and peeks, blackjack 3:2, insurance 2:1, double, one split (the hands slide apart).
+- **Invite via Steam**: Steam's invite window, so you can invite any friend, even one who isn't playing. Accepting the invite starts Balatro and joins your lobby. "Join game" from the friends list works too.
+- **Live partner scoring**: their chips x mult and the hand total count up in your HUD as it happens; their points land in the round score as soon as their hand ends.
+- **Partner's jokers show their real values** (X Mult, +Chips, counters, stickers). Bridge copies those values too.
+- New art for all 9 team jokers.
+- **Unstick turn**: if both players sit with nobody's turn, the turn fixes itself after a few seconds, and an "Unstick turn" button shows up if anything still hangs.
+
+### Changed
+- Synergy removed: the built-in Mult relay did the same as the Echo team joker. Echo now passes 35% instead of 20%.
+- Resonance reworked: no more matching ranks (it forced the same build). The more evenly you both score in a blind, the bigger an XMult, up to X1.5. Resonance and the 70% share cap are separate lobby options, both off by default.
+- Leaner team panel: only what the HUD doesn't show already.
+- Co-op menu: the Balatro logo no longer covers the panel; buttons sit side by side.
+
+### Fixed
+- Crash (`extra_slots_used`) when the partner's cards appeared while a tarot was being used.
+- A joker made free by a skip tag was free for one player only.
+- A bought joker could stay in the shop as an unbuyable ghost.
+- The partner's last hand stayed in your HUD after their turn.
+
 ## 0.10.0
 
 - **Play via Steam**: invite a Steam friend who is running Balatro, no lobby code or server needed. Steam handles the connection (NAT punching, relays), with no message rate limit.

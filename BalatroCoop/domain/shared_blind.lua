@@ -15,6 +15,12 @@
 --
 -- A blind is identified by G.GAME.round: blind choices are shared, so both
 -- players always have the same round number.
+--
+-- Deadlock guard: the heartbeat also says whose turn each side thinks it is.
+-- If both sides sit idle, each believing it's the other's turn, for a few
+-- seconds, the player whose turn it is by the counts takes it (SB.force); if
+-- that doesn't settle it, the host does. "Unstick" in the team panel does the
+-- same by hand and also clears a partner hand stuck on our board.
 
 COOP.SB = COOP.SB or {}
 local SB = COOP.SB
@@ -34,6 +40,9 @@ function SB.reset()
 	SB.partner_blind = {} -- round -> partner's blind state (disabled, chips)
 	SB.ended_round = nil -- vanilla end_round already ran for this round
 	SB.end_deferred = false
+	SB.force = nil -- { round, played }: our turn, whatever else says, until we play
+	SB.stuck_since = nil -- both idle and nobody's turn since then
+	SB.state_stuck_since = nil -- our own game sitting in DRAW_TO_HAND with nothing queued
 end
 SB.reset()
 
@@ -93,6 +102,10 @@ function SB.my_turn()
 	if mine < 1 then
 		return false
 	end
+	local f = SB.force
+	if f and f.round == SB.round() and f.played == G.GAME.current_round.hands_played then
+		return true
+	end
 	if COOP.PV.partner_playing() then
 		return false -- their hand is still being shown and scored on our board
 	end
@@ -104,6 +117,64 @@ function SB.my_turn()
 		return my_played <= their_played
 	end
 	return my_played < their_played
+end
+
+-- Whose turn it is by the hand counts alone (ignores replays on the board).
+local function my_turn_by_counts()
+	if my_hands_left() < 1 then
+		return false
+	end
+	if SB.partner_hands_left() < 1 or not COOP.MODES.on('alternate_turns') then
+		return true
+	end
+	local my_played, their_played = G.GAME.current_round.hands_played, SB.partner_hands_played()
+	if SB.i_start() then
+		return my_played <= their_played
+	end
+	return my_played < their_played
+end
+
+local function is_host()
+	local lobby = MPAPI.get_current_lobby()
+	return lobby and lobby.is_host
+end
+
+-- Take the turn now; clears whatever partner hand is still shown on our board.
+function SB.take_turn(why)
+	COOP.debug('turn: taking it (%s); my played=%s their played=%s', tostring(why),
+		tostring(G.GAME.current_round.hands_played), tostring(SB.partner_hands_played()))
+	SB.force = { round = SB.round(), played = G.GAME.current_round.hands_played }
+	SB.stuck_since = nil
+	COOP.PV.clear_stuck_play()
+end
+
+-- "Unstick" button: take the turn and tell the partner to let go of theirs.
+function SB.unstick()
+	if G.STATE == G.STATES.DRAW_TO_HAND and #(G.E_MANAGER.queues.base or {}) == 0 then
+		-- our own game stopped between hands: pick up from selecting cards
+		G.STATE = G.STATES.SELECTING_HAND
+		G.STATE_COMPLETE = false
+	end
+	SB.state_stuck_since = nil
+	if my_hands_left() > 0 then
+		SB.take_turn('button')
+	end
+	COOP.send('unstick', { round = SB.round() })
+end
+
+function SB.on_partner_unstick(round)
+	if round == SB.round() then
+		COOP.debug('turn: partner pressed unstick')
+		SB.force = nil
+		SB.stuck_since = nil
+		COOP.PV.clear_stuck_play()
+	end
+end
+
+-- True when the game seems stuck long enough to offer the button.
+function SB.looks_stuck()
+	local now = G.TIMERS.REAL
+	return (SB.stuck_since and now - SB.stuck_since > 4) or (SB.state_stuck_since and now - SB.state_stuck_since > 5) or false
 end
 
 function SB.own_score()
@@ -148,6 +219,7 @@ function SB.apply_partner_score()
 		-- in G.GAME.chips the blind must not be decided (SB.ease_pending).
 		SB.ease_pending = (SB.ease_pending or 0) + 1
 		G.E_MANAGER:add_event(Event({
+			blockable = false, -- don't wait behind the replayed popups
 			func = function()
 				-- front-inserted, so they run right after this one, in reverse
 				-- order of insertion: the ease first, then the flag is cleared
@@ -183,9 +255,11 @@ end
 -- Heartbeat: the partner's full state in this blind, sent every second while
 -- they sit in it. Counts are absolute, so a lost message (server rate limit,
 -- reconnect) is repaired by the next heartbeat instead of locking the turns.
-function SB.on_partner_ready(round, hands_left, played, total)
+function SB.on_partner_ready(round, hands_left, played, total, turn)
 	local r = report(round)
 	r.ready = true
+	r.turn = turn -- 1: they think it's theirs, 0: not, -1: they're waiting
+	r.beat_at = G.TIMERS.REAL
 	r.hands_left = hands_left
 	r.played = math.max(r.played, played or 0)
 	r.total = math.max(r.total, total or 0)
@@ -298,12 +372,20 @@ function SB.update()
 	end
 	SB.apply_partner_blind()
 	SB.sync_blind()
+	local now = G.TIMERS.REAL
+	-- our own game parked between hands with nothing left to run
+	if G.STATE == G.STATES.DRAW_TO_HAND and #(G.E_MANAGER.queues.base or {}) == 0 then
+		SB.state_stuck_since = SB.state_stuck_since or now
+	else
+		SB.state_stuck_since = nil
+	end
 	if G.STATE ~= G.STATES.SELECTING_HAND or G.CONTROLLER.locked then
+		SB.stuck_since = nil
 		return
 	end
 
 	local round = SB.round()
-	local now = G.TIMERS.REAL
+	local turn = SB.my_turn()
 	if SB.sent_ready ~= round or now - (SB.last_heartbeat or 0) >= 1 then
 		SB.sent_ready = round
 		SB.last_heartbeat = now
@@ -312,7 +394,23 @@ function SB.update()
 			hands_left = my_hands_left(),
 			played = G.GAME.current_round.hands_played or 0,
 			total = math.floor(SB.own_score()),
+			turn = turn == true and 1 or turn == false and 0 or -1,
 		})
+	end
+
+	-- deadlock: both idle in this blind, neither thinks it's their turn
+	local r = SB.reports[round]
+	local partner_idle_not_turn = r and r.ready and r.turn ~= nil and r.turn ~= 1 and now - (r.beat_at or 0) < 3
+	if turn ~= true and my_hands_left() > 0 and partner_idle_not_turn and SB.partner_hands_left() > 0 then
+		SB.stuck_since = SB.stuck_since or now
+		local stuck_for = now - SB.stuck_since
+		if stuck_for > 6 and my_turn_by_counts() then
+			SB.take_turn('deadlock, mine by counts')
+		elseif stuck_for > 12 and is_host() then
+			SB.take_turn('deadlock, host decides')
+		end
+	else
+		SB.stuck_since = nil
 	end
 
 	-- Only touch G.GAME.chips while nothing is scoring: a hand's score is an

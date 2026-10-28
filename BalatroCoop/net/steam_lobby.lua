@@ -8,7 +8,13 @@
 --     ('meta'), ready ('ready'), start with a seed ('start'); 'ping' keeps an
 --     eye on the connection and 'bye' says we left
 --
--- Packets: { t = 'invite' | 'join' | 'batch' | 'ping' | 'bye', ... }
+--   * or the host opens Steam's own invite window ("Invite via Steam"): any
+--     friend, even one not playing, gets an invite in Steam chat. Accepting it
+--     starts Balatro with '+coop_join <host id>' on the command line; the
+--     friend's mod then knocks ('knock') until the host sends its invite,
+--     which is accepted automatically
+--
+-- Packets: { t = 'invite' | 'join' | 'knock' | 'batch' | 'ping' | 'bye', ... }
 
 COOP.SL = COOP.SL or {}
 local SL = COOP.SL
@@ -19,12 +25,16 @@ local INVITE_EVERY = 2
 local PING_EVERY = 2
 local INVITE_TTL = 8 -- an invite not repeated for this long is gone
 local LOST_AFTER = 12
+local KNOCK_EVERY = 2
+local KNOCK_FOR = 180 -- the host may still be setting up
+local CONNECT_PREFIX = '+coop_join '
 
 SL.partner = nil -- { id, name, joined }
 SL.invites = {} -- id -> { name, version, at }
 SL.friends = {}
 SL.scan_at, SL.invite_at, SL.ping_at, SL.last_heard = 0, 0, 0, 0
 SL.lost_warned = false
+SL.auto_join, SL.auto_join_until, SL.knock_at = nil, 0, 0
 
 local function now()
 	return G.TIMERS and G.TIMERS.REAL or 0
@@ -93,6 +103,7 @@ local function make_lobby(host)
 	end)
 	l.coop_partner = SL.partner
 	l:on('disconnected', function()
+		SN.set_connect(nil)
 		local p = l.coop_partner
 		if not p then
 			return
@@ -129,6 +140,22 @@ function SL.host(id, name)
 	SL.invite_at = 0 -- send now
 end
 
+-- Host: open a lobby and Steam's invite window for any friend.
+function SL.host_open()
+	local l = lobby()
+	if not (l and l.is_host) then
+		SL.partner = nil
+		l = make_lobby(true)
+		if not l then
+			return
+		end
+	end
+	local connect = CONNECT_PREFIX .. (SN.my_id() or '')
+	SN.set_connect(connect) -- "Join game" in the friends list works too
+	SN.invite_dialog(connect)
+	MPAPI.refresh_current_view()
+end
+
 -- Guest: accept a friend's invite.
 function SL.accept(id)
 	local inv = SL.invites[id]
@@ -158,6 +185,13 @@ end
 local function on_invite(from, m)
 	local fresh = not SL.invites[from]
 	SL.invites[from] = { name = tostring(m.name or '?'), version = tostring(m.version or '?'), at = now() }
+	COOP.debug('steam: invite from %s', from)
+	if from == SL.auto_join then
+		-- we started Balatro from this host's Steam invite
+		SL.auto_join = nil
+		SL.accept(from)
+		return
+	end
 	if fresh then
 		play_sound('timpani')
 		-- show it unless the player is busy with something else
@@ -165,6 +199,40 @@ local function on_invite(from, m)
 			SL.open_menu()
 		end
 	end
+end
+
+-- Join a host's lobby: knock until it invites us, then accept automatically.
+function SL.join_host(host, why)
+	if not host or host == SN.my_id() then
+		return
+	end
+	if COOP.is_active() then
+		COOP.debug('steam: ignoring join to %s during a run', host)
+		return -- never drop a co-op run in progress
+	end
+	COOP.debug('steam: joining %s (%s)', host, tostring(why))
+	SL.auto_join, SL.auto_join_until, SL.knock_at = host, now() + KNOCK_FOR, 0
+	local l = MPAPI.get_current_lobby()
+	if l and not (l.coop_steam and SL.partner and SL.partner.id == host) then
+		l:leave() -- whatever lobby we were in, the invite wins
+	end
+	SN.accept(host)
+end
+
+-- Host: a friend who accepted our Steam invite is here.
+local function on_knock(from, m)
+	COOP.debug('steam: knock from %s', from)
+	local l = lobby()
+	if not l or not l.is_host or SL.connected() then
+		return
+	end
+	if not (SL.partner and SL.partner.id == from) then
+		SL.partner = { id = from, name = tostring(m.name or '?'), joined = false }
+		l.coop_partner = SL.partner
+		l.host_id = l.player_id
+	end
+	SL.invite_at = 0 -- invite right away
+	MPAPI.refresh_current_view()
 end
 
 local function on_join(m)
@@ -214,6 +282,8 @@ local function handle(from, m)
 			on_join(m)
 		elseif m.t == 'bye' then
 			on_bye()
+		elseif m.t == 'knock' then
+			on_knock(from, m)
 		elseif m.t == 'invite' then
 			local l = lobby()
 			if l and not l.is_host then
@@ -225,6 +295,8 @@ local function handle(from, m)
 		end
 	elseif m.t == 'invite' then
 		on_invite(from, m)
+	elseif m.t == 'knock' then
+		on_knock(from, m)
 	end
 end
 
@@ -237,6 +309,27 @@ function SL.update()
 		pcall(G.STEAM.runCallbacks)
 	end
 	local t = now()
+	if not SL.launch_checked then
+		SL.launch_checked = true
+		local line = SN.launch_line()
+		COOP.debug('steam: launch line: %s', line)
+		SL.join_host(line:match('coop_join%s+(%d+)'), 'launch')
+		-- "Join" clicked while the game is already running
+		SN.on_join_requested(function(friend, connect)
+			COOP.debug('steam: join requested via %s: %s', friend, connect)
+			SL.join_host(connect:match('coop_join%s+(%d+)') or friend, 'invite')
+		end)
+	end
+	-- started from a Steam invite: knock until the host invites us
+	if SL.auto_join and not lobby() then
+		if t > SL.auto_join_until then
+			SL.auto_join = nil
+		elseif t - SL.knock_at >= KNOCK_EVERY then
+			SL.knock_at = t
+			local sent = SN.send(SL.auto_join, hello_packet('knock'))
+			COOP.debug('steam: knock to %s sent=%s', SL.auto_join, tostring(sent))
+		end
+	end
 	-- friends running Balatro: let their invites through
 	if t - SL.scan_at >= SCAN_EVERY and G.STAGE ~= G.STAGES.RUN then
 		SL.scan_at = t
@@ -364,7 +457,7 @@ end
 local function menu_signature()
 	local parts = {}
 	for _, f in ipairs(SL.friends) do
-		parts[#parts + 1] = f.id
+		parts[#parts + 1] = f.id .. ((f.connect or '') ~= '' and '+' or '')
 	end
 	parts[#parts + 1] = '#'
 	for id in pairs(SL.invites) do
@@ -380,6 +473,11 @@ local function menu_definition()
 		nodes[#nodes + 1] = row({ text(localize('k_coop_steam_unavailable'), 0.36, G.C.RED) })
 		return nodes
 	end
+	if SL.auto_join then
+		nodes[#nodes + 1] = row({ text(localize('k_coop_steam_joining'), 0.34, G.C.GREEN) })
+	end
+	nodes[#nodes + 1] = row({ id_button('coop_steam_overlay', localize('k_coop_steam_invite_any'), G.C.GREEN, '') })
+	nodes[#nodes + 1] = row({ text(localize('k_coop_steam_invite_any_hint'), 0.28, G.C.UI.TEXT_LIGHT) })
 	for id, inv in pairs(SL.invites) do
 		local same = inv.version == tostring(COOP.version)
 		nodes[#nodes + 1] = row({
@@ -398,9 +496,14 @@ local function menu_definition()
 		if i > 8 then
 			break
 		end
+		local hosting = (f.connect or ''):find('coop_join', 1, true) ~= nil
 		nodes[#nodes + 1] = row({
-			{ n = G.UIT.C, config = { align = 'cl', minw = 5.4 }, nodes = { text(MPAPI.truncate(f.name, 22), 0.36) } },
-			id_button('coop_steam_invite', localize('k_coop_steam_invite'), G.C.BLUE, f.id),
+			{ n = G.UIT.C, config = { align = 'cl', minw = 5.4 }, nodes = {
+				text(MPAPI.truncate(f.name, 22), 0.36),
+				hosting and text('  ' .. localize('k_coop_steam_hosting'), 0.3, G.C.GREEN) or text('', 0.3),
+			} },
+			hosting and id_button('coop_steam_join', localize('k_coop_steam_join'), G.C.GREEN, f.id)
+				or id_button('coop_steam_invite', localize('k_coop_steam_invite'), G.C.BLUE, f.id),
 		}, 'cm', 0.04)
 	end
 	nodes[#nodes + 1] = row({ text(localize('k_coop_steam_hint'), 0.28, G.C.UI.TEXT_LIGHT) })
@@ -442,6 +545,21 @@ G.FUNCS.coop_steam_invite = function(e)
 	SL.menu_box = nil
 	G.FUNCS.exit_overlay_menu()
 	SL.host(id, name)
+end
+
+G.FUNCS.coop_steam_overlay = function()
+	SL.menu_box = nil
+	if G.OVERLAY_MENU then
+		G.FUNCS.exit_overlay_menu()
+	end
+	SL.host_open()
+end
+
+G.FUNCS.coop_steam_join = function(e)
+	local id = e.config.ref_table.id
+	SL.menu_box = nil
+	G.FUNCS.exit_overlay_menu()
+	SL.join_host(id, 'menu')
 end
 
 G.FUNCS.coop_steam_accept = function(e)
