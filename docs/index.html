@@ -9,7 +9,7 @@
 <meta property="og:description" content="Two players, one run, one shared score against every blind.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://dallowin.github.io/balatro-coop/">
-<meta property="og:image" content="https://dallowin.github.io/balatro-coop/img/art/hero.webp">
+<meta property="og:image" content="https://dallowin.github.io/balatro-coop/img/logo.webp">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='5' width='15' height='22' rx='3' fill='%23fe5f55' transform='rotate(-10 10 16)'/%3E%3Crect x='14' y='5' width='15' height='22' rx='3' fill='%23009dff' transform='rotate(10 22 16)'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -86,6 +86,7 @@ nav .wrap { display: flex; align-items: center; gap: 18px; height: 58px; }
 .hero { padding: 56px 16px 30px; display: grid; grid-template-columns: 1.05fr 1fr; gap: 40px; align-items: center; }
 .hero h1 { font-size: clamp(46px, 7vw, 82px); line-height: 1; margin: 0 0 14px; text-shadow: 0 5px 0 var(--shadow); }
 .hero h1 span { color: var(--red); display: block; }
+.logo-h1 img { display: block; width: 100%; max-width: 520px; height: auto; filter: drop-shadow(0 8px 0 rgba(0,0,0,.35)); }
 .hero p.tag { font-size: 20px; color: var(--muted); margin: 0 0 24px; max-width: 520px; }
 .hero .buttons { display: flex; gap: 12px; flex-wrap: wrap; }
 .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 22px; }
@@ -183,7 +184,7 @@ html[lang="en"] [data-l="en"], html[lang="ru"] [data-l="ru"] { display: revert; 
 
 <header class="wrap hero">
 	<div>
-		<h1>Balatro <span>Co-op</span></h1>
+		<h1 class="logo-h1"><img src="img/logo.webp" width="900" height="492" alt="Balatro Co-op"></h1>
 		<p class="tag">
 			<span data-l="en">Two players, one run, one shared score against every blind. You win together and you lose together.</span>
 			<span data-l="ru">Двое игроков, один забег, общий счёт против каждого блайнда. Побеждаете вместе и проигрываете вместе.</span>
