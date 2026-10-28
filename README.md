@@ -1,5 +1,7 @@
 # Balatro Co-op
 
+[▶ Watch the teaser on YouTube](https://www.youtube.com/watch?v=5GjqEjpJz3o)
+
 **Two players, one run, one shared score against every blind.**
 
 A co-op mode for [Balatro](https://store.steampowered.com/app/2379780/Balatro/): you and a friend play the same seed, take turns playing hands, and your chips add up against a single, tougher blind. You win together and you lose together.

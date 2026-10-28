@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.13.0
+
+Teaser: https://www.youtube.com/watch?v=5GjqEjpJz3o
+
+### New
+- **Co-op effects** in the game's own style: what one of your co-op cards sends flies to your partner as a see-through ghost of the card; your partner's hand total flies into the team score; a team win swirls the background in chips blue and mult red; paired jokers shimmer while your partner holds the other half; Torch burns away in fire and Swap dissolves with a glitch.
+- **Casino on credit**: with Credit Card the casino lets you bet into debt, down to the same -$20 as the shop.
+
+### Fixed
+- **Bond** now really draws a card for your partner (the draw used to stop at the hand size, so it drew nothing).
+- **Face-down cards** (The House, The Wheel...) stay face-down on your partner's board.
+- **Shop**: the guest's purchases go through at once instead of waiting for the host; if both players grab the same card at the same moment, the guest gets the money back.
+- **Score**: your partner's hand counts into the team score as soon as it shows on their HUD, not seconds later.
+- **Blind select**: host and guest always start the same blind (one could end up on the Boss, the other on the Small Blind).
+- The partner's hand name and level no longer stay under their total, and their label no longer covers the played cards.
+
 ## 0.12.1
 
 ### New
