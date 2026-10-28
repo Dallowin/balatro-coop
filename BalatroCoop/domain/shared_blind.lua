@@ -85,7 +85,7 @@ function SB.i_start()
 	if COOP.TEST then
 		return true -- the mirror only repeats us: we always open, it follows
 	end
-	local lobby = MPAPI.get_current_lobby()
+	local lobby = COOP.get_lobby()
 	local host = lobby and lobby.is_host
 	if SB.round() % 2 == 1 then
 		return host
@@ -135,7 +135,7 @@ local function my_turn_by_counts()
 end
 
 local function is_host()
-	local lobby = MPAPI.get_current_lobby()
+	local lobby = COOP.get_lobby()
 	return lobby and lobby.is_host
 end
 
@@ -190,6 +190,10 @@ function SB.partner_counted_score()
 end
 
 function SB.counted_score()
+	if COOP.boss_is and COOP.boss_is('bl_coop_tyrant') then
+		-- The Tyrant: only the weaker score counts, twice
+		return 2 * math.min(math.max(SB.own_score(), 0), SB.partner_counted_score())
+	end
 	if not COOP.MODES.on('share_cap') then
 		return G.GAME.chips
 	end
@@ -588,7 +592,7 @@ function SB.install_hooks()
 	function Blind:set_blind(blind, reset, silent)
 		set_blind_ref(self, blind, reset, silent)
 		if COOP.is_active() and blind and not reset and self.chips and self.chips > 0 then
-			local mult = COOP.BLIND_MULT
+			local mult = COOP.BLIND_MULT * COOP.CHALLENGE.blind_factor()
 			if self.boss and COOP.MODES.on('evil_bosses') then
 				-- "evil bosses" mode: harder bosses, double reward
 				mult = mult * 1.5

@@ -21,7 +21,7 @@ local POLL_EVERY = 0.2
 local ORDER_EVERY = 0.5
 
 local function is_host()
-	local lobby = MPAPI.get_current_lobby()
+	local lobby = COOP.get_lobby()
 	return lobby and lobby.is_host
 end
 
@@ -385,7 +385,7 @@ function DK.install_hooks()
 	local start_run_ref = Game.start_run
 	function Game:start_run(args)
 		start_run_ref(self, args)
-		if COOP.in_run and MPAPI.is_active(COOP.id) and not (args and args.savetext) and COOP.MODES.on('shared_deck') then
+		if COOP.in_run and COOP.get_lobby() and not (args and args.savetext) and COOP.MODES.on('shared_deck') then
 			DK.deal()
 		end
 	end
@@ -430,7 +430,9 @@ function DK.install_hooks()
 		if not DK.dealt then
 			-- separate decks: same seed, same cards -> the guest shuffles with
 			-- its own seed, or both would draw the very same hands
-			return shuffle_ref(self, is_host() and seed or ((seed or 'shuffle') .. '_guest'))
+			-- (the Siamese deck wants the very same draws on both sides)
+			local same = is_host() or (COOP.siamese and COOP.siamese())
+			return shuffle_ref(self, same and seed or ((seed or 'shuffle') .. '_guest'))
 		end
 		-- whatever the partner held is back in the shared deck now, except the
 		-- cards already in their new hand (they may have drawn before we shuffle)

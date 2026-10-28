@@ -2,11 +2,11 @@
 --   * the host picks a friend who is running Balatro and invites them
 --     ('invite', repeated until answered); the friend gets a pop-up list with
 --     the invite and accepts ('join')
---   * both sides then run an MPAPI local lobby, so the rest of the mod sees an
---     ordinary lobby; the game's messages travel as 'batch' packets
---   * what a server lobby would do is done with our own messages: options
---     ('meta'), ready ('ready'), start with a seed ('start'); 'ping' keeps an
---     eye on the connection and 'bye' says we left
+--   * both sides then run our own lobby (net/lobby.lua); the game's messages
+--     travel as 'batch' packets
+--   * the lobby is kept in step with our own messages: options ('meta'),
+--     ready ('ready'), start with a seed ('start'); 'ping' keeps an eye on
+--     the connection and 'bye' says we left
 --
 --   * or the host opens Steam's own invite window ("Invite via Steam"): any
 --     friend, even one not playing, gets an invite in Steam chat. Accepting it
@@ -41,7 +41,7 @@ local function now()
 end
 
 local function lobby()
-	local l = MPAPI.get_current_lobby()
+	local l = COOP.get_lobby()
 	return l and l.coop_steam and l or nil
 end
 
@@ -75,23 +75,15 @@ end
 
 -- Shared setup of the local lobby on both sides.
 local function make_lobby(host)
-	local current = MPAPI.get_current_lobby()
+	local current = COOP.get_lobby()
 	if current then
 		SL.replacing = true
 		current:leave()
 		SL.replacing = false
 	end
-	local l = MPAPI.create_local_lobby(COOP.id, { max_players = 2 })
-	if not l then
-		return nil
-	end
+	local l = COOP.LOBBY.create({ host = host, name = SN.my_name() })
 	l.coop_steam = true
-	l.is_host = host
 	l.host_id = host and l.player_id or player_id(SL.partner.id)
-	local me = l._players[l.player_id]
-	if me then
-		me.displayName = SN.my_name() or me.displayName
-	end
 	COOP.partner_version = nil
 	SL.last_heard = now()
 	SL.lost_warned = false
@@ -99,7 +91,7 @@ local function make_lobby(host)
 		if l.is_host then
 			SL.send_meta()
 		end
-		MPAPI.refresh_current_view()
+		COOP.refresh_view()
 	end)
 	l.coop_partner = SL.partner
 	l:on('disconnected', function()
@@ -153,7 +145,7 @@ function SL.host_open()
 	local connect = CONNECT_PREFIX .. (SN.my_id() or '')
 	SN.set_connect(connect) -- "Join game" in the friends list works too
 	SN.invite_dialog(connect)
-	MPAPI.refresh_current_view()
+	COOP.refresh_view()
 end
 
 -- Guest: accept a friend's invite.
@@ -170,7 +162,7 @@ function SL.accept(id)
 	SN.accept(id)
 	SN.send(id, hello_packet('join'))
 	COOP.send_hello()
-	MPAPI.refresh_current_view()
+	COOP.refresh_view()
 end
 
 function SL.leave()
@@ -195,7 +187,7 @@ local function on_invite(from, m)
 	if fresh then
 		play_sound('timpani')
 		-- show it unless the player is busy with something else
-		if G.STAGE == G.STAGES.MAIN_MENU and not G.OVERLAY_MENU and not MPAPI.get_current_lobby() then
+		if G.STAGE == G.STAGES.MAIN_MENU and not G.OVERLAY_MENU and not COOP.get_lobby() then
 			SL.open_menu()
 		end
 	end
@@ -212,7 +204,7 @@ function SL.join_host(host, why)
 	end
 	COOP.debug('steam: joining %s (%s)', host, tostring(why))
 	SL.auto_join, SL.auto_join_until, SL.knock_at = host, now() + KNOCK_FOR, 0
-	local l = MPAPI.get_current_lobby()
+	local l = COOP.get_lobby()
 	if l and not (l.coop_steam and SL.partner and SL.partner.id == host) then
 		l:leave() -- whatever lobby we were in, the invite wins
 	end
@@ -232,7 +224,7 @@ local function on_knock(from, m)
 		l.host_id = l.player_id
 	end
 	SL.invite_at = 0 -- invite right away
-	MPAPI.refresh_current_view()
+	COOP.refresh_view()
 end
 
 local function on_join(m)
@@ -246,7 +238,7 @@ local function on_join(m)
 	COOP.send_hello()
 	SL.send_meta()
 	play_sound('highlight2')
-	MPAPI.refresh_current_view()
+	COOP.refresh_view()
 end
 
 local function on_bye()
@@ -264,7 +256,7 @@ local function on_bye()
 		l._players[player_id(SL.partner.id)] = nil
 		SL.partner.joined = false
 		COOP.partner_version = nil
-		MPAPI.refresh_current_view()
+		COOP.refresh_view()
 	else
 		l.coop_partner = nil -- don't say bye back
 		SL.partner = nil
@@ -369,7 +361,7 @@ function SL.update()
 		if COOP.is_active() then
 			COOP.popup(localize(lost and 'k_coop_steam_lost' or 'k_coop_steam_back'), lost and G.C.RED or G.C.GREEN)
 		else
-			MPAPI.refresh_current_view()
+			COOP.refresh_view()
 		end
 	end
 end
@@ -389,7 +381,7 @@ function SL.on_meta(data)
 		for k, v in pairs(data) do
 			l._metadata[k] = v
 		end
-		MPAPI.refresh_current_view()
+		COOP.refresh_view()
 	end
 end
 
@@ -400,7 +392,7 @@ function SL.on_ready(ready)
 		if p then
 			p.ready = ready
 		end
-		MPAPI.refresh_current_view()
+		COOP.refresh_view()
 	end
 end
 
@@ -410,7 +402,7 @@ function SL.toggle_ready()
 	if me then
 		me.ready = not me.ready
 		COOP.send('ready', { ready = me.ready })
-		MPAPI.refresh_current_view()
+		COOP.refresh_view()
 	end
 end
 
@@ -482,8 +474,8 @@ local function menu_definition()
 		local same = inv.version == tostring(COOP.version)
 		nodes[#nodes + 1] = row({
 			{ n = G.UIT.C, config = { align = 'cl', minw = 5.4 }, nodes = {
-				text(MPAPI.truncate(inv.name, 18) .. ' ' .. localize('k_coop_steam_invites_you'), 0.36, G.C.GREEN),
-				same and text('', 0.3) or text('  (' .. MPAPI.truncate(inv.version, 10) .. ')', 0.3, G.C.RED),
+				text(COOP.truncate(inv.name, 18) .. ' ' .. localize('k_coop_steam_invites_you'), 0.36, G.C.GREEN),
+				same and text('', 0.3) or text('  (' .. COOP.truncate(inv.version, 10) .. ')', 0.3, G.C.RED),
 			} },
 			id_button('coop_steam_accept', localize('k_coop_steam_accept'), G.C.GREEN, id),
 		}, 'cm', 0.06)
@@ -499,7 +491,7 @@ local function menu_definition()
 		local hosting = (f.connect or ''):find('coop_join', 1, true) ~= nil
 		nodes[#nodes + 1] = row({
 			{ n = G.UIT.C, config = { align = 'cl', minw = 5.4 }, nodes = {
-				text(MPAPI.truncate(f.name, 22), 0.36),
+				text(COOP.truncate(f.name, 22), 0.36),
 				hosting and text('  ' .. localize('k_coop_steam_hosting'), 0.3, G.C.GREEN) or text('', 0.3),
 			} },
 			hosting and id_button('coop_steam_join', localize('k_coop_steam_join'), G.C.GREEN, f.id)

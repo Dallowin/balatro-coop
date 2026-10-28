@@ -1,20 +1,21 @@
 -- Team panel during a run, in the free space on the right between the team
 -- joker row and our hand: how much each player has put into the blind (and
--- the cap), the last hands, the resonance, and a new chat line for a few
+-- the cap), the last hands, the resonance, where the partner is (only while elsewhere), and a new chat line for a few
 -- seconds. Only non-empty lines are shown, so the panel stays small.
 
 COOP.STATUS = COOP.STATUS or {}
 local ST = COOP.STATUS
 
-local CHAT_SHOW_FOR = 12
+local CHAT_SHOW_FOR = 8
 
-ST.text = { counted = '', need = '', shares = '', hands = '', resonance = '', chat = '' }
+ST.text = { counted = '', need = '', shares = '', hands = '', resonance = '', activity = '', chat = '' }
 
 local LINES = {
 	{ key = 'counted', colour = 'GOLD', scale = 0.28 },
 	{ key = 'need', colour = 'RED', scale = 0.25 },
 	{ key = 'shares', colour = 'WHITE', scale = 0.25 },
 	{ key = 'resonance', colour = 'PLANET', scale = 0.24 },
+	{ key = 'activity', colour = 'FILTER', scale = 0.24 },
 	{ key = 'chat', colour = 'TEXT_LIGHT', scale = 0.24 },
 }
 
@@ -117,13 +118,13 @@ function ST.update()
 	local mine, theirs = last(ST.last_me, 'coop_last_me'), last(ST.last_partner, 'coop_last_partner')
 	t.hands = (mine ~= '' and theirs ~= '') and (mine .. '   ' .. theirs) or (mine .. theirs)
 	-- a new chat line shows for a few seconds
-	local lines = COOP.CHAT.lines(1)
-	local latest = lines[#lines]
+	t.activity = COOP.SOCIAL.activity_line()
+	local latest = COOP.CHAT.latest_loud()
 	if latest ~= ST.chat_latest then
 		ST.chat_latest = latest
 		ST.chat_until = latest and G.TIMERS.REAL + CHAT_SHOW_FOR or 0
 	end
-	t.chat = latest and G.TIMERS.REAL < (ST.chat_until or 0) and MPAPI.truncate(latest, 36) or ''
+	t.chat = latest and G.TIMERS.REAL < (ST.chat_until or 0) and COOP.truncate(latest, 36) or ''
 
 	-- rebuild the box when the set of non-empty lines changes
 	local visible, shape = {}, ''

@@ -97,6 +97,11 @@ nav .wrap { display: flex; align-items: center; gap: 18px; height: 58px; }
 @media (max-width: 860px) { .hero { grid-template-columns: 1fr; padding-top: 32px; } }
 
 section { padding: 54px 0; }
+.newgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+@media (max-width: 860px) { .newgrid { grid-template-columns: 1fr; } }
+.tile { background: rgba(0,0,0,.3); border-radius: 14px; padding: 18px; border-top: 4px solid var(--c, var(--blue)); box-shadow: 0 6px 0 var(--shadow); }
+.tile h3 { margin: 0 0 6px; font-size: 22px; }
+.tile p { margin: 0; color: var(--muted); font-size: 15px; }
 .kicker { font: 700 14px 'Pixelify Sans', monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--gold); text-align: center; }
 section h2 { font-size: clamp(30px, 4.5vw, 44px); margin: 4px 0 10px; text-align: center; text-shadow: 0 4px 0 var(--shadow); }
 .lead { text-align: center; color: var(--muted); max-width: 680px; margin: 0 auto 34px; font-size: 17px; }
@@ -173,6 +178,7 @@ html[lang="en"] [data-l="en"], html[lang="ru"] [data-l="ru"] { display: revert; 
 	<div class="wrap">
 		<a class="logo" href="#">Balatro <b>Co-op</b></a>
 		<div class="links">
+			<a href="#new"><span data-l="en">What's new</span><span data-l="ru">Что нового</span></a>
 			<a href="#features"><span data-l="en">Features</span><span data-l="ru">Фичи</span></a>
 			<a href="#casino"><span data-l="en">Casino</span><span data-l="ru">Казино</span></a>
 			<a href="#jokers"><span data-l="en">Team jokers</span><span data-l="ru">Джокеры</span></a>
@@ -193,7 +199,7 @@ html[lang="en"] [data-l="en"], html[lang="ru"] [data-l="ru"] { display: revert; 
 		</p>
 		<div class="buttons">
 			<a class="btn red" href="https://github.com/Dallowin/balatro-coop/releases/latest"><span data-l="en">Download</span><span data-l="ru">Скачать</span><small id="ver">&nbsp;</small></a>
-			<a class="btn blue" href="#install"><span data-l="en">How to install</span><span data-l="ru">Как установить</span><small>Lovely · Steamodded · MultiplayerAPI</small></a>
+			<a class="btn blue" href="#install"><span data-l="en">How to install</span><span data-l="ru">Как установить</span><small>Lovely · Steamodded</small></a>
 		</div>
 		<div class="badges">
 			<span class="badge"><b>2</b> <span data-l="en">players</span><span data-l="ru">игрока</span></span>
@@ -204,6 +210,69 @@ html[lang="en"] [data-l="en"], html[lang="ru"] [data-l="ru"] { display: revert; 
 		</div>
 	</div>
 </header>
+
+<section id="new">
+	<div class="wrap">
+		<div class="kicker reveal"><span data-l="en">Version 0.12</span><span data-l="ru">Версия 0.12</span></div>
+		<h2 class="reveal"><span data-l="en">What's new</span><span data-l="ru">Что нового</span></h2>
+		<p class="lead reveal">
+			<span data-l="en">In the game: the "What's new" button in the co-op menu. Everything else: the <a href="https://github.com/Dallowin/balatro-coop/blob/main/CHANGELOG.md">changelog</a>.</span>
+			<span data-l="ru">В игре — кнопка «Что нового» в меню коопа. Полный список — в <a href="https://github.com/Dallowin/balatro-coop/blob/main/CHANGELOG.md">журнале изменений</a>.</span>
+		</p>
+		<div class="newgrid">
+			<div class="tile reveal" style="--c: var(--purple)">
+				<h3><span data-l="en">Pair jokers</span><span data-l="ru">Парные джокеры</span></h3>
+				<p data-l="en">Yin &amp; Yang, Sun &amp; Moon, Sword &amp; Shield: strong only when split between you two.</p>
+				<p data-l="ru">Инь и Ян, Солнце и Луна, Меч и Щит: сильны, только когда половинки у разных игроков.</p>
+			</div>
+			<div class="tile reveal" style="--c: var(--blue)">
+				<h3><span data-l="en">Co-op cards</span><span data-l="ru">Кооп-карты</span></h3>
+				<p data-l="en">New Tarots, the Swap spectral, Bond and Sacrifice seals, Bulwark cards, from the Co-op Pack.</p>
+				<p data-l="ru">Новые таро, спектральная «Обмен», печати «Связь» и «Жертва», карты «Оплот» — из Кооп-пака.</p>
+			</div>
+			<div class="tile reveal" style="--c: var(--green)">
+				<h3><span data-l="en">Chat wheel &amp; pings</span><span data-l="ru">Колесо чата и пинги</span></h3>
+				<p data-l="en">Hold Y for quick phrases, ping any card with the middle mouse button, "Offer" in the shop.</p>
+				<p data-l="ru">Зажми Y — быстрые фразы, пингуй любую карту колёсиком, «Предложить» в лавке.</p>
+			</div>
+			<div class="tile reveal" style="--c: var(--red)">
+				<h3><span data-l="en">Only Steamodded</span><span data-l="ru">Только Steamodded</span></h3>
+				<p data-l="en">No MultiplayerAPI any more: Lovely, Steamodded and the mod. Play goes through Steam.</p>
+				<p data-l="ru">MultiplayerAPI больше не нужен: Lovely, Steamodded и мод. Игра идёт через Steam.</p>
+			</div>
+			<div class="tile reveal" style="--c: var(--purple)">
+				<h3><span data-l="en">Shared consumables</span><span data-l="ru">Общие расходники</span></h3>
+				<p data-l="en">Tarots, planets and spectrals are one pool for both of you, with 4 slots.</p>
+				<p data-l="ru">Таро, планеты и спектральные карты — общие на двоих, 4 слота.</p>
+			</div>
+			<div class="tile reveal" style="--c: var(--gold)">
+				<h3><span data-l="en">Daily run</span><span data-l="ru">Ежедневный забег</span></h3>
+				<p data-l="en">One seed and one set of rules a day for every pair, plus a challenge of the day.</p>
+				<p data-l="ru">Один сид и одни правила на день для всех пар + испытание дня.</p>
+			</div>
+			<div class="tile reveal" style="--c: var(--red)">
+				<h3><span data-l="en">Challenges</span><span data-l="ru">Испытания</span></h3>
+				<p data-l="en">Sprint, Tight, Broke, Specialists, Big hands. The blind requirement is adjusted to keep it fair.</p>
+				<p data-l="ru">Спринт, Теснота, Без гроша, Специалисты, Большие руки. Требование блайнда подстроено.</p>
+			</div>
+			<div class="tile reveal" style="--c: var(--blue)">
+				<h3><span data-l="en">Co-op bosses</span><span data-l="ru">Кооп-боссы</span></h3>
+				<p data-l="en">The Envy, The Shackle, The Tyrant and The Fog hit your teamwork, not just your cards.</p>
+				<p data-l="ru">Ревность, Кандалы, Тиран и Туман бьют по командной игре, а не только по картам.</p>
+			</div>
+			<div class="tile reveal" style="--c: var(--green)">
+				<h3><span data-l="en">Team decks</span><span data-l="ru">Командные колоды</span></h3>
+				<p data-l="en">Siamese: both get the same draws. Red &amp; Black: one plays red suits, the other black.</p>
+				<p data-l="ru">Сиамская: у обоих одинаковые раздачи. Красное и чёрное: у одного красные масти, у другого чёрные.</p>
+			</div>
+			<div class="tile reveal" style="--c: var(--gold)">
+				<h3><span data-l="en">Run history</span><span data-l="ru">История забегов</span></h3>
+				<p data-l="en">Every co-op run is kept, and "Copy result" gives you a line to share.</p>
+				<p data-l="ru">Каждый кооп-забег сохраняется, а «Скопировать результат» даёт строку, чтобы поделиться.</p>
+			</div>
+		</div>
+	</div>
+</section>
 
 <section id="features">
 	<div class="wrap">
@@ -380,6 +449,28 @@ html[lang="en"] [data-l="en"], html[lang="ru"] [data-l="ru"] { display: revert; 
 	</div>
 </section>
 
+<section id="cards">
+	<div class="wrap">
+		<div class="kicker reveal"><span data-l="en">New in 0.12</span><span data-l="ru">Новое в 0.12</span></div>
+		<h2 class="reveal"><span data-l="en">Co-op cards</span><span data-l="ru">Кооп-карты</span></h2>
+		<p class="lead reveal"><span data-l="en">Pairs to split between you, Tarots that reach your partner, and a pack to find them in.</span><span data-l="ru">Пары, которые надо разделить, таро, которые работают на напарника, и пак, где всё это найти.</span></p>
+		<div class="jgrid">
+			<div class="jcard reveal"><img src="img/cards/yin.png" width="142" height="190" alt="Yin" loading="lazy"><h3><span data-l="en">Yin</span><span data-l="ru">Инь</span></h3><p data-l="en">+4 Mult. Paired with Yang at your partner: X2 Mult too.</p><p data-l="ru">+4 Множ. Если Ян у напарника — ещё ×2.</p></div>
+			<div class="jcard reveal"><img src="img/cards/yang.png" width="142" height="190" alt="Yang" loading="lazy"><h3><span data-l="en">Yang</span><span data-l="ru">Ян</span></h3><p data-l="en">+4 Mult. Paired with Yin at your partner: X2 Mult too.</p><p data-l="ru">+4 Множ. Если Инь у напарника — ещё ×2.</p></div>
+			<div class="jcard reveal"><img src="img/cards/sun.png" width="142" height="190" alt="Sun" loading="lazy"><h3><span data-l="en">Sun</span><span data-l="ru">Солнце</span></h3><p data-l="en">+15 Chips per Heart and Diamond. Paired: per any card.</p><p data-l="ru">+15 фишек за черви и бубны. В паре — за любую карту.</p></div>
+			<div class="jcard reveal"><img src="img/cards/moon.png" width="142" height="190" alt="Moon" loading="lazy"><h3><span data-l="en">Moon</span><span data-l="ru">Луна</span></h3><p data-l="en">+15 Chips per Spade and Club. Paired: per any card.</p><p data-l="ru">+15 фишек за пики и трефы. В паре — за любую карту.</p></div>
+			<div class="jcard reveal"><img src="img/cards/sword.png" width="142" height="190" alt="Sword" loading="lazy"><h3><span data-l="en">Sword</span><span data-l="ru">Меч</span></h3><p data-l="en">X1.5 Mult. Paired with Shield: X2.5.</p><p data-l="ru">×1.5 Множ. В паре со Щитом — ×2.5.</p></div>
+			<div class="jcard reveal"><img src="img/cards/shield.png" width="142" height="190" alt="Shield" loading="lazy"><h3><span data-l="en">Shield</span><span data-l="ru">Щит</span></h3><p data-l="en">+1 discard every blind. Paired with Sword: +1 hand too.</p><p data-l="ru">+1 сброс в блайнде. В паре с Мечом — ещё +1 рука.</p></div>
+			<div class="jcard reveal"><img src="img/cards/bond.png" width="142" height="190" alt="The Bond" loading="lazy"><h3><span data-l="en">The Bond</span><span data-l="ru">Узы</span></h3><p data-l="en">Bond Seal on 2 cards: when played, your partner draws a card.</p><p data-l="ru">Печать «Связь» на 2 карты: сыграл — напарник берёт карту.</p></div>
+			<div class="jcard reveal"><img src="img/cards/offering.png" width="142" height="190" alt="The Offering" loading="lazy"><h3><span data-l="en">The Offering</span><span data-l="ru">Подношение</span></h3><p data-l="en">Sacrifice Seal on 2 cards: when discarded, your partner gets +1 discard.</p><p data-l="ru">Печать «Жертва» на 2 карты: сбросил — напарнику +1 сброс.</p></div>
+			<div class="jcard reveal"><img src="img/cards/fortress.png" width="142" height="190" alt="The Fortress" loading="lazy"><h3><span data-l="en">The Fortress</span><span data-l="ru">Твердыня</span></h3><p data-l="en">2 cards become Bulwark: held in your hand, every partner hand gets X1.2.</p><p data-l="ru">2 карты становятся «Оплотом»: пока в руке, каждая рука напарника ×1.2.</p></div>
+			<div class="jcard reveal"><img src="img/cards/twins.png" width="142" height="190" alt="The Twins" loading="lazy"><h3><span data-l="en">The Twins</span><span data-l="ru">Близнецы</span></h3><p data-l="en">Creates the other half of your partner's pair joker.</p><p data-l="ru">Создаёт вторую половинку к парному джокеру напарника.</p></div>
+			<div class="jcard reveal"><img src="img/cards/swap.png" width="142" height="190" alt="Swap" loading="lazy"><h3><span data-l="en">Swap</span><span data-l="ru">Обмен</span></h3><p data-l="en">Spectral: trade one of your jokers for one of your partner's.</p><p data-l="ru">Спектральная: меняет твоего джокера на джокера напарника.</p></div>
+			<div class="jcard reveal"><img src="img/cards/pack.png" width="142" height="190" alt="Co-op Pack" loading="lazy"><h3><span data-l="en">Co-op Pack</span><span data-l="ru">Кооп-пак</span></h3><p data-l="en">Pair jokers, co-op Tarots and Swap. Choose 1 of 3, or 2 of 5 in the Mega pack.</p><p data-l="ru">Парные джокеры, кооп-таро и «Обмен». 1 из 3, в Мега — 2 из 5.</p></div>
+		</div>
+	</div>
+</section>
+
 <section id="jokers">
 	<div class="wrap">
 		<div class="kicker reveal"><span data-l="en">Rare · shared slots</span><span data-l="ru">Редкие · общие слоты</span></div>
@@ -409,13 +500,12 @@ html[lang="en"] [data-l="en"], html[lang="ru"] [data-l="ru"] { display: revert; 
 				<div class="deps">
 					<div class="dep"><span>Lovely Injector</span><a href="https://github.com/ethangreen-dev/lovely-injector/releases">GitHub</a></div>
 					<div class="dep"><span>Steamodded</span><a href="https://github.com/Steamodded/smods/releases">GitHub</a></div>
-					<div class="dep"><span>MultiplayerAPI</span><a href="https://github.com/Balatro-Multiplayer/BalatroMultiplayerAPI/releases">GitHub</a></div>
 					<div class="dep"><span>Balatro Co-op</span><a href="https://github.com/Dallowin/balatro-coop/releases/latest">GitHub</a></div>
 				</div>
 				<div class="steps">
 					<div class="step"><p data-l="en"><b>Lovely:</b> its <code>.dll</code> next to <code>Balatro.exe</code> (Steam → Balatro → Manage → Browse local files).</p><p data-l="ru"><b>Lovely:</b> его <code>.dll</code> рядом с <code>Balatro.exe</code> (Steam → Balatro → Управление → Просмотреть локальные файлы).</p></div>
 					<div class="step"><p data-l="en"><b>Mods folder:</b> Win+R → <code>%AppData%\Balatro\Mods</code>.</p><p data-l="ru"><b>Папка модов:</b> Win+R → <code>%AppData%\Balatro\Mods</code>.</p></div>
-					<div class="step"><p data-l="en"><b>Steamodded, MultiplayerAPI</b> and the <b>BalatroCoop</b> folder from the release go into <code>Mods</code>.</p><p data-l="ru"><b>Steamodded, MultiplayerAPI</b> и папку <b>BalatroCoop</b> из релиза — в <code>Mods</code>.</p></div>
+					<div class="step"><p data-l="en"><b>Steamodded</b> and the <b>BalatroCoop</b> folder from the release go into <code>Mods</code>.</p><p data-l="ru"><b>Steamodded</b> и папку <b>BalatroCoop</b> из релиза — в <code>Mods</code>.</p></div>
 					<div class="step"><p data-l="en"><b>Start Balatro from Steam.</b> Both players need the same version.</p><p data-l="ru"><b>Запусти Balatro через Steam.</b> У обоих должна быть одинаковая версия.</p></div>
 				</div>
 			</div>
@@ -466,8 +556,8 @@ html[lang="en"] [data-l="en"], html[lang="ru"] [data-l="ru"] { display: revert; 
 <footer>
 	<div class="wrap">
 		<p>
-			<span data-l="en">Built on Lovely, Steamodded and MultiplayerAPI. Balatro by LocalThunk / Playstack. Unofficial fan mod, GPL-3.0. Illustrations are AI-generated; screenshots are from the game.</span>
-			<span data-l="ru">Построен на Lovely, Steamodded и MultiplayerAPI. Balatro — LocalThunk / Playstack. Неофициальный фанатский мод, GPL-3.0. Иллюстрации сгенерированы ИИ, скриншоты — из игры.</span>
+			<span data-l="en">Built on Lovely and Steamodded. Balatro by LocalThunk / Playstack. Unofficial fan mod, GPL-3.0. Illustrations are AI-generated; screenshots are from the game.</span>
+			<span data-l="ru">Построен на Lovely и Steamodded. Balatro — LocalThunk / Playstack. Неофициальный фанатский мод, GPL-3.0. Иллюстрации сгенерированы ИИ, скриншоты — из игры.</span>
 		</p>
 		<p><a href="https://github.com/Dallowin/balatro-coop">github.com/Dallowin/balatro-coop</a></p>
 	</div>

@@ -11,7 +11,7 @@ A co-op mode for [Balatro](https://store.steampowered.com/app/2379780/Balatro/):
 ## Features
 
 - **Shared blind**: hands are played in turns (or simultaneously), scores add up, the requirement is scaled for two.
-- **Play via Steam**: invite any Steam friend, even one who isn't playing: they get the invite in Steam chat and Balatro starts right into your lobby. No lobby code, no server. Lobby codes through the Multiplayer server work too.
+- **Play via Steam**: invite any Steam friend, even one who isn't playing: they get the invite in Steam chat and Balatro starts right into your lobby. No lobby code, no server.
 - **Casino in the shop**: slots with joker reels (Blueprint is wild, x100 jackpot) and blackjack with real cards and casino rules, for your shared money.
 - **Shared shop, money and vouchers**: you shop together and leave together; vouchers are shared (and 30% more expensive).
 - **Shared deck** (option): 104 cards for the two of you; card changes (tarots, seals, editions) are seen by both.
@@ -19,6 +19,11 @@ A co-op mode for [Balatro](https://store.steampowered.com/app/2379780/Balatro/):
 - **Tarots on your partner's cards**.
 - **Team jokers**: 3 shared slots and 9 rare team jokers with their own art (Pass, Bridge, Echo, Double Strike, Chain, Contrast, Shared Hand, Support, Second Wind).
 - **Optional rules**: resonance (the more evenly you both score in a blind, the bigger an XMult, up to X1.5, whatever your builds) and a 70% per-player share cap. Both off by default.
+- **Shared consumables**: tarots, planets and spectrals are one pool for both, with 4 slots.
+- **Pair jokers and co-op cards**: Yin & Yang, Sun & Moon, Sword & Shield (strong only when split between you), new Tarots, the Swap spectral, Bond and Sacrifice seals, Bulwark cards, all from the Co-op Pack.
+- **Talk without typing**: a Dota-style chat wheel (hold Y), card pings (middle mouse / G) and an Offer button in the shop.
+- **Daily run, challenges, co-op bosses and team decks**: one seed a day for every pair, five challenges, four bosses that hit teamwork, two decks made for two.
+- **Run history** with a copyable result to share.
 - **Lobby options**: shared or separate deck, alternating or simultaneous turns, resonance, share cap, difficulty, evil bosses, deck and stake.
 - **Solo test mode**: a mirror partner that replays your own moves, to try things out alone.
 - English and Russian.
@@ -31,9 +36,8 @@ Balatro on PC with these mods:
 | --- | --- |
 | [Lovely Injector](https://github.com/ethangreen-dev/lovely-injector) | [Releases](https://github.com/ethangreen-dev/lovely-injector/releases) |
 | [Steamodded](https://github.com/Steamodded/smods) (1.0.0 beta or newer) | [Releases](https://github.com/Steamodded/smods/releases) |
-| [MultiplayerAPI](https://github.com/Balatro-Multiplayer/BalatroMultiplayerAPI) | [Releases](https://github.com/Balatro-Multiplayer/BalatroMultiplayerAPI/releases) |
 
-Remove the old **Multiplayer** mod (e.g. `multiplayer-0.5.5`) if you have it: it conflicts with MultiplayerAPI.
+MultiplayerAPI is no longer needed. Remove the **Multiplayer** mod (e.g. `multiplayer-0.5.5`) if you have it.
 
 **Both players need the same version of Balatro Co-op.** The lobby checks it and won't start otherwise.
 
@@ -42,7 +46,7 @@ Remove the old **Multiplayer** mod (e.g. `multiplayer-0.5.5`) if you have it: it
 1. Install **Lovely**: put `version.dll` (or `winmm.dll`, depending on the release) next to `Balatro.exe`.
    (Steam → right-click Balatro → Manage → Browse local files.)
 2. Open the mods folder: `%AppData%\Balatro\Mods` (create `Mods` if it doesn't exist).
-3. Put **Steamodded** and **MultiplayerAPI** there.
+3. Put **Steamodded** there.
 4. Download `BalatroCoop-x.y.z.zip` from the [latest release](https://github.com/Dallowin/balatro-coop/releases/latest) and extract it into `Mods`, so you get `Mods\BalatroCoop\BalatroCoop.json`.
 5. Start Balatro from Steam.
 
@@ -64,9 +68,9 @@ Open an [issue](https://github.com/Dallowin/balatro-coop/issues) with what happe
 
 ## Credits
 
-- [Lovely Injector](https://github.com/ethangreen-dev/lovely-injector), [Steamodded](https://github.com/Steamodded/smods) and [MultiplayerAPI](https://github.com/Balatro-Multiplayer/BalatroMultiplayerAPI): Balatro Co-op is built on them.
+- [Lovely Injector](https://github.com/ethangreen-dev/lovely-injector) and [Steamodded](https://github.com/Steamodded/smods): Balatro Co-op is built on them.
 - Balatro by LocalThunk / Playstack. This is an unofficial fan mod.
 
 ## License
 
-[GPL-3.0](LICENSE), like MultiplayerAPI, which it builds on.
+[GPL-3.0](LICENSE).

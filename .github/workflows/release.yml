@@ -32,7 +32,7 @@ jobs:
       - name: Release notes from the changelog
         run: |
           awk -v v="## $VERSION" '$0 == v {on=1; next} /^## / {on=0} on' CHANGELOG.md > notes.md
-          printf '\nInstall: extract into `%%AppData%%\\Balatro\\Mods` (needs Lovely, Steamodded and MultiplayerAPI, see the README).\n' >> notes.md
+          printf '\nInstall: extract into `%%AppData%%\\Balatro\\Mods` (needs Lovely and Steamodded, see the README).\n' >> notes.md
 
       - name: Publish
         env:

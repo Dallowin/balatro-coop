@@ -37,7 +37,22 @@ end
 
 -- Partner -> us -----------------------------------------------------------------
 
-function SY.on_partner_play(cards_code) end -- resonance no longer looks at ranks
+-- The partner's last played hand (for co-op bosses): round, card count, ranks.
+function SY.on_partner_play(cards_code)
+	local pp = { round = COOP.SB.round(), count = 0, ranks = {} }
+	for code in string.gmatch(cards_code or '', '[^;]+') do
+		pp.count = pp.count + 1
+		local front = code:match('^[^|]*|([^|]*)')
+		local card = front and G.P_CARDS[front]
+		if card and card.value then
+			pp.ranks[card.value] = true
+		end
+	end
+	SY.partner_play = pp
+	if COOP.refresh_envy then
+		COOP.refresh_envy()
+	end
+end
 
 function SY.on_resonance(level) end -- older versions sent their rank resonance
 

@@ -1,6 +1,5 @@
--- A small chat of our own (MPAPI's chat needs server-side permissions most
--- accounts don't have). Messages ride the normal co-op batches; they are
--- shown straight away, in the lobby as well as in a run.
+-- A small chat. Messages ride the normal co-op batches; they are shown
+-- straight away, in the lobby as well as in a run.
 
 COOP.CHAT = COOP.CHAT or {}
 local CH = COOP.CHAT
@@ -10,22 +9,35 @@ CH.log = CH.log or {}
 CH.input = { text = '' }
 
 local function my_name()
-	local s = MPAPI.connection_state or {}
-	local name = s.display_name or s.steam_name
+	local name = COOP.STEAMNET.available() and COOP.STEAMNET.my_name()
 	if not name or name == '' then
 		name = localize('k_coop_you')
 	end
 	return name
 end
 
-function CH.add(name, text)
-	CH.log[#CH.log + 1] = { name = name, text = text, at = G.TIMERS.REAL }
+-- quiet: a chat wheel phrase, already shown in a bubble (kept in the log,
+-- but not repeated in the team panel)
+function CH.add(name, text, quiet)
+	CH.log[#CH.log + 1] = { name = name, text = text, at = G.TIMERS.REAL, quiet = quiet }
 	while #CH.log > CH.MAX do
 		table.remove(CH.log, 1)
 	end
-	play_sound('paper1', 1.1, 0.5)
+	if not quiet then
+		play_sound('paper1', 1.1, 0.5)
+	end
 	if G.STAGE ~= G.STAGES.RUN then
-		MPAPI.refresh_current_view() -- lobby page shows the chat
+		COOP.refresh_view() -- lobby page shows the chat
+	end
+end
+
+-- the newest typed (not wheel) line, for the team panel
+function CH.latest_loud()
+	for i = #CH.log, 1, -1 do
+		local m = CH.log[i]
+		if not m.quiet then
+			return m.name .. ': ' .. m.text
+		end
 	end
 end
 

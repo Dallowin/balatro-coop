@@ -45,7 +45,7 @@ function TM.has(key)
 end
 
 local function is_host()
-	local lobby = MPAPI.get_current_lobby()
+	local lobby = COOP.get_lobby()
 	return lobby and lobby.is_host
 end
 

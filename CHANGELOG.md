@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.12.0
+
+### Changed
+- **No MultiplayerAPI any more**: the mod needs only Lovely and Steamodded. The co-op panel sits in the top left corner of the main menu; play goes through Steam. Lobbies by code through the Multiplayer server are gone.
+
+### New
+- **Pair jokers**: Yin & Yang, Sun & Moon, Sword & Shield. Each half is weak alone and strong while your partner holds the other half. Own a half and the other one comes to the next shop.
+- **Co-op cards**: Tarots The Bond, The Offering, The Fortress and The Twins; the Swap spectral (trade a joker with your partner); Bond and Sacrifice seals; Bulwark cards (held in hand, they boost every partner hand X1.2). All from the new **Co-op Pack** and **Mega Co-op Pack** in the shop.
+- **Chat wheel**: hold Y, the wheel opens around the mouse, move onto a phrase and let go. Your partner sees it in a bubble, in their own language.
+- **Pings**: middle mouse button (or G) over a card lights it up for your partner: "look!", again "take it!", again "don't". Shop cards have an **Offer** button next to Buy.
+- **Where's your partner**: the team panel says "Partner: in the casino" (shop, pack...) while you two are in different places.
+- **Shared consumables**: tarots, planets and spectrals are one pool for the team, with 4 slots. Whatever one player gets, both have; used or sold by one, it's gone for both.
+- **What's new** window: opens once after an update, and from a button in the co-op menu.
+- **New co-op menu** with the Balatro Co-op logo; the lobby options sit in two columns and the rules come in pages.
+- **Daily run** (lobby option "Run"): one seed and one fixed set of rules per day for every pair, with a challenge of the day.
+- **Challenges** (lobby option "Challenge"): Sprint (2 hands, 2 discards), Tight (3 joker slots), Broke (no money, no interest), Specialists (the host plays, the guest discards), Big hands (+2 hand size). Each one scales the blind requirement so it stays fair.
+- **Co-op bosses**: The Envy (the ranks your partner just played are debuffed), The Shackle (play as many cards as your partner did), The Tyrant (only the weaker score counts, doubled), The Fog (your partner's board is hidden).
+- **Team decks**: Siamese (both get the same draws) and Red & Black (the host plays red suits, the guest black ones, +1 hand).
+- **Lobby previews**: the chosen deck shows its card and description, the challenge what it changes and how the blind requirement is adjusted.
+- **Run history** in the co-op menu, with a button to copy your result (today's best daily run first).
+
 ## 0.11.0
 
 ### New

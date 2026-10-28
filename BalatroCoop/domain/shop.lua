@@ -51,7 +51,7 @@ local function may_buy(card, replay)
 		return true
 	end
 	local sid = card.coop_sid
-	local lobby = MPAPI.get_current_lobby()
+	local lobby = COOP.get_lobby()
 	if lobby and lobby.is_host then
 		if S.claimed[sid] == 'guest' then
 			COOP.popup(localize('k_coop_already_bought'), G.C.RED)
@@ -120,7 +120,7 @@ function S.on_claim_result(sid, ok)
 end
 
 local function is_host()
-	local lobby = MPAPI.get_current_lobby()
+	local lobby = COOP.get_lobby()
 	return lobby and lobby.is_host
 end
 

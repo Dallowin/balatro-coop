@@ -1,0 +1,593 @@
+-- New co-op cards, all only in co-op runs, art in assets/*/coop_*.png:
+--
+--   Pair jokers   three pairs (Yin/Yang, Sun/Moon, Sword/Shield): each half
+--                 is weak alone and strong while the PARTNER holds the other
+--                 half (both halves with one player do nothing extra). Once a
+--                 half is owned, its other half shows up in the next shop.
+--   Swap          spectral: swaps one of your jokers with one of the
+--                 partner's (the one you clicked in their panel, else their
+--                 rightmost)
+--   Seals         Bond: played -> the partner draws a card;
+--                 Sacrifice: discarded -> the partner gets +1 discard
+--   Bulwark       enhancement: while it's held in your hand, the partner's
+--                 hands get X1.2 Mult (each)
+--   Tarots        The Bond, The Offering, The Fortress put those on cards
+--                 (yours or, as usual, the partner's); The Twins makes the
+--                 other half of a pair joker the partner holds
+--   Co-op Pack    booster with all of the above (normal 1 of 3, mega 2 of 5)
+
+COOP.CARDS = COOP.CARDS or {}
+local CC = COOP.CARDS
+
+SMODS.Atlas({ key = 'pairs', path = 'coop_pairs.png', px = 71, py = 95 })
+SMODS.Atlas({ key = 'coop_tarots', path = 'coop_tarots.png', px = 71, py = 95 })
+SMODS.Atlas({ key = 'coop_boosters', path = 'coop_boosters.png', px = 71, py = 95 })
+SMODS.Atlas({ key = 'coop_enhancers', path = 'coop_enhancers.png', px = 71, py = 95 })
+
+local function coop_pool()
+	return COOP.is_active()
+end
+
+local BULWARK_X = 1.2
+
+-- What the partner has, from their last snapshot (ui/partner_view.lua):
+-- cards are 'sort_id|card_key|center|edition|seal|...' joined by ';'.
+local function partner_codes(field)
+	local p = COOP.PV and COOP.PV.partner
+	local out = {}
+	for code in tostring(p and p[field] or ''):gmatch('[^;]+') do
+		local parts = {}
+		for part in (code .. '|'):gmatch('([^|]*)|') do
+			parts[#parts + 1] = part
+		end
+		out[#out + 1] = parts
+	end
+	return out
+end
+
+function COOP.partner_jokers()
+	local keys = {}
+	for _, p in ipairs(partner_codes('jokers')) do
+		keys[#keys + 1] = p[3]
+	end
+	return keys
+end
+
+function COOP.partner_has_joker(key)
+	for _, k in ipairs(COOP.partner_jokers()) do
+		if k == key then
+			return true
+		end
+	end
+	return false
+end
+
+local function i_have_joker(key)
+	return G.jokers and next(SMODS.find_card(key, true)) ~= nil
+end
+
+-- Pair jokers ------------------------------------------------------------------------
+
+CC.PAIRS = { yin = 'yang', yang = 'yin', sun = 'moon', moon = 'sun', sword = 'shield', shield = 'sword' }
+local PAIR_POS = { yin = 0, yang = 1, sun = 2, moon = 3, sword = 4, shield = 5 }
+
+local function other_half(card)
+	local short = card.config.center.key:gsub('^j_coop_', '')
+	return 'j_coop_' .. (CC.PAIRS[short] or '')
+end
+
+-- the pair works while the other half is the partner's
+function CC.paired(card)
+	return COOP.is_active() and COOP.partner_has_joker(other_half(card))
+end
+
+local function pair_vars(card, ...)
+	local vars = { ... }
+	vars[#vars + 1] = localize({ type = 'name_text', set = 'Joker', key = other_half(card) })
+	vars[#vars + 1] = localize(CC.paired(card) and 'k_coop_pair_on' or 'k_coop_pair_off')
+	return vars
+end
+
+local function pair_joker(key, def)
+	def.key = key
+	def.atlas = 'pairs'
+	def.pos = { x = PAIR_POS[key], y = 0 }
+	def.in_pool = coop_pool
+	def.blueprint_compat = def.blueprint_compat ~= false
+	SMODS.Joker(def)
+end
+
+-- Yin / Yang: +4 Mult; paired X2 Mult too.
+for _, key in ipairs({ 'yin', 'yang' }) do
+	pair_joker(key, {
+		rarity = 1,
+		cost = 5,
+		config = { extra = { mult = 4, xmult = 2 } },
+		loc_vars = function(self, info_queue, card)
+			return { vars = pair_vars(card, card.ability.extra.mult, card.ability.extra.xmult) }
+		end,
+		calculate = function(self, card, context)
+			if context.joker_main then
+				if CC.paired(card) then
+					return { mult = card.ability.extra.mult, xmult = card.ability.extra.xmult }
+				end
+				return { mult = card.ability.extra.mult }
+			end
+		end,
+	})
+end
+
+-- Sun: +15 Chips per scored Heart / Diamond; Moon: per Spade / Club. Paired:
+-- every scored card counts.
+local SUITS = { sun = { 'Hearts', 'Diamonds' }, moon = { 'Spades', 'Clubs' } }
+for _, key in ipairs({ 'sun', 'moon' }) do
+	pair_joker(key, {
+		rarity = 1,
+		cost = 5,
+		config = { extra = { chips = 15 } },
+		loc_vars = function(self, info_queue, card)
+			return { vars = pair_vars(card, card.ability.extra.chips) }
+		end,
+		calculate = function(self, card, context)
+			if context.individual and context.cardarea == G.play then
+				local c = context.other_card
+				if CC.paired(card) or c:is_suit(SUITS[key][1]) or c:is_suit(SUITS[key][2]) then
+					return { chips = card.ability.extra.chips }
+				end
+			end
+		end,
+	})
+end
+
+-- Sword: X1.5 Mult; paired X2.5.
+pair_joker('sword', {
+	rarity = 2,
+	cost = 6,
+	config = { extra = { xmult = 1.5, paired_xmult = 2.5 } },
+	loc_vars = function(self, info_queue, card)
+		return { vars = pair_vars(card, card.ability.extra.xmult, card.ability.extra.paired_xmult) }
+	end,
+	calculate = function(self, card, context)
+		if context.joker_main then
+			return { xmult = CC.paired(card) and card.ability.extra.paired_xmult or card.ability.extra.xmult }
+		end
+	end,
+})
+
+-- Shield: +1 discard each blind; paired +1 hand too.
+pair_joker('shield', {
+	rarity = 2,
+	cost = 6,
+	blueprint_compat = false,
+	config = { extra = { discards = 1, hands = 1 } },
+	loc_vars = function(self, info_queue, card)
+		return { vars = pair_vars(card, card.ability.extra.discards, card.ability.extra.hands) }
+	end,
+	calculate = function(self, card, context)
+		if context.setting_blind and not context.blueprint then
+			ease_discard(card.ability.extra.discards)
+			if CC.paired(card) then
+				ease_hands_played(card.ability.extra.hands)
+			end
+			return { message = localize('k_coop_shield_up'), colour = G.C.BLUE }
+		end
+	end,
+})
+
+-- the other half of a pair one of us holds and nobody has yet
+function CC.wanted_half()
+	if not COOP.is_active() then
+		return nil
+	end
+	local theirs = COOP.partner_jokers()
+	local function owned(key)
+		if i_have_joker(key) then
+			return true
+		end
+		for _, k in ipairs(theirs) do
+			if k == key then
+				return true
+			end
+		end
+		return false
+	end
+	for half, other in pairs(CC.PAIRS) do
+		local a, b = 'j_coop_' .. half, 'j_coop_' .. other
+		if owned(a) and not owned(b) then
+			for _, c in ipairs(G.shop_jokers and G.shop_jokers.cards or {}) do
+				if c.config.center.key == b then
+					return nil -- already on sale
+				end
+			end
+			return b
+		end
+	end
+end
+
+-- The shop (generated by the host, see domain/shop.lua): once per round,
+-- the first joker slot becomes the missing half.
+local create_card_for_shop_ref = create_card_for_shop
+function create_card_for_shop(area)
+	local card = create_card_for_shop_ref(area)
+	local ok, err = pcall(function()
+		local lobby = COOP.get_lobby()
+		if not (COOP.is_active() and lobby and lobby.is_host and area == G.shop_jokers and card and card.ability.set == 'Joker') then
+			return
+		end
+		if G.GAME.coop_pair_round == G.GAME.round then
+			return
+		end
+		local want = CC.wanted_half()
+		if want and G.P_CENTERS[want] then
+			G.GAME.coop_pair_round = G.GAME.round
+			card:set_ability(G.P_CENTERS[want], true)
+			card:set_cost()
+		end
+	end)
+	if not ok then
+		sendWarnMessage('pair in shop failed: ' .. tostring(err), COOP.id)
+	end
+	return card
+end
+
+-- Swap -------------------------------------------------------------------------------
+
+-- the partner joker clicked in their panel (index), for Swap
+CC.swap_pick = nil
+
+function CC.pick_partner_joker(card)
+	local area = COOP.PV.joker_area
+	if not area then
+		return
+	end
+	for i, c in ipairs(area.cards) do
+		if c == card then
+			CC.swap_pick = CC.swap_pick ~= i and i or nil
+		end
+		c.highlighted = false
+	end
+	if CC.swap_pick and area.cards[CC.swap_pick] then
+		area.cards[CC.swap_pick].highlighted = true
+		area.cards[CC.swap_pick]:juice_up(0.3, 0.3)
+	end
+	play_sound('cardSlide1')
+end
+
+local function swappable(card)
+	return card and not (card.ability and card.ability.eternal)
+end
+
+SMODS.Consumable({
+	key = 'swap',
+	set = 'Spectral',
+	atlas = 'coop_tarots',
+	pos = { x = 4, y = 0 },
+	cost = 4,
+	in_pool = coop_pool,
+	loc_vars = function(self, info_queue, card)
+		return { vars = {} }
+	end,
+	can_use = function(self, card)
+		return COOP.is_active() and G.jokers and #G.jokers.highlighted == 1 and swappable(G.jokers.highlighted[1])
+			and #COOP.partner_jokers() > 0
+	end,
+	use = function(self, card, area)
+		local mine = G.jokers.highlighted[1]
+		local n = #COOP.partner_jokers()
+		local idx = CC.swap_pick and CC.swap_pick <= n and CC.swap_pick or n
+		CC.swap_pick = nil
+		COOP.send('swap', { key = mine.config.center.key, edition = mine.edition and mine.edition.key or '', idx = idx })
+		G.E_MANAGER:add_event(Event({
+			func = function()
+				mine:start_dissolve({ G.C.SECONDARY_SET.Spectral }, nil, 1.2)
+				return true
+			end,
+		}))
+	end,
+})
+
+local function add_joker(key, edition)
+	if not G.P_CENTERS[key] then
+		return
+	end
+	local card = SMODS.add_card({ key = key, area = G.jokers, edition = edition ~= '' and edition or nil })
+	if card then
+		card:juice_up(0.4, 0.4)
+	end
+end
+
+-- partner used Swap: give them the joker at idx, take theirs
+function CC.on_swap(key, edition, idx)
+	if not G.jokers then
+		return
+	end
+	local mine = G.jokers.cards[idx] or G.jokers.cards[#G.jokers.cards]
+	if mine and swappable(mine) then
+		COOP.send('swap_back', { key = mine.config.center.key, edition = mine.edition and mine.edition.key or '' })
+		mine:start_dissolve({ G.C.SECONDARY_SET.Spectral }, nil, 1.2)
+	else
+		COOP.send('swap_back', { key = key, edition = edition }) -- nothing to give: theirs comes back
+		return
+	end
+	add_joker(key, edition)
+	COOP.popup(localize('k_coop_swapped'), G.C.SECONDARY_SET.Spectral)
+end
+
+function CC.on_swap_back(key, edition)
+	add_joker(key, edition)
+	COOP.popup(localize('k_coop_swapped'), G.C.SECONDARY_SET.Spectral)
+end
+
+-- Seals and Bulwark ------------------------------------------------------------------
+
+CC.pending_draws = 0
+
+SMODS.Seal({
+	key = 'bond',
+	atlas = 'coop_enhancers',
+	pos = { x = 1, y = 0 },
+	badge_colour = HEX('2FB8A8'),
+	in_pool = coop_pool,
+	calculate = function(self, card, context)
+		if context.main_scoring and context.cardarea == G.play and COOP.is_active() then
+			COOP.send('bond_draw', { n = 1 })
+			return { message = localize('k_coop_bond_msg'), colour = HEX('2FB8A8') }
+		end
+	end,
+})
+
+SMODS.Seal({
+	key = 'sacrifice',
+	atlas = 'coop_enhancers',
+	pos = { x = 2, y = 0 },
+	badge_colour = HEX('9AA0A6'),
+	in_pool = coop_pool,
+	calculate = function(self, card, context)
+		if context.discard and (not context.other_card or context.other_card == card) and COOP.is_active() then
+			-- the discard may reach the seal twice (the game's own call and
+			-- Steamodded's); count it once
+			if card.coop_sacrificed and G.TIMERS.REAL - card.coop_sacrificed < 1 then
+				return
+			end
+			card.coop_sacrificed = G.TIMERS.REAL
+			COOP.send('sacrifice', { n = 1 })
+			return { message = localize('k_coop_sacrifice_msg'), colour = G.C.UI.TEXT_INACTIVE }
+		end
+	end,
+})
+
+SMODS.Enhancement({
+	key = 'bulwark',
+	atlas = 'coop_enhancers',
+	pos = { x = 0, y = 0 },
+	config = { extra = { xmult = BULWARK_X } },
+	in_pool = coop_pool,
+	loc_vars = function(self, info_queue, card)
+		return { vars = { BULWARK_X } }
+	end,
+})
+
+-- the partner played a Bond card: draw one (now if we're picking cards, else
+-- at our next chance in this blind)
+function CC.on_bond_draw(n)
+	CC.pending_draws = CC.pending_draws + (n or 1)
+end
+
+function CC.on_sacrifice(n)
+	if G.GAME and G.GAME.blind and G.GAME.blind.in_blind then
+		ease_discard(n or 1)
+		COOP.popup(localize('k_coop_sacrifice_got'), G.C.RED)
+	end
+end
+
+-- Game:update
+function CC.update()
+	if CC.pending_draws <= 0 then
+		return
+	end
+	local in_blind = G.GAME and G.GAME.blind and G.GAME.blind.in_blind
+	if not in_blind then
+		CC.pending_draws = 0
+		return
+	end
+	if G.STATE ~= G.STATES.SELECTING_HAND or G.CONTROLLER.locked or #G.deck.cards == 0 then
+		return
+	end
+	local n = math.min(CC.pending_draws, #G.deck.cards)
+	CC.pending_draws = 0
+	G.FUNCS.draw_from_deck_to_hand(n)
+	COOP.popup(localize('k_coop_bond_got'), HEX('2FB8A8'))
+end
+
+-- Bulwark cards in the partner's hand back up every hand we play.
+function CC.bulwark_xmult()
+	local n = 0
+	for _, p in ipairs(partner_codes('hand')) do
+		if p[3] == 'm_coop_bulwark' then
+			n = n + 1
+		end
+	end
+	return n > 0 and BULWARK_X ^ n or nil
+end
+
+-- Tarots -----------------------------------------------------------------------------
+
+local function on_selected(card, max, apply)
+	local targets = {}
+	for i = 1, math.min(#G.hand.highlighted, max) do
+		targets[#targets + 1] = G.hand.highlighted[i]
+	end
+	for _, c in ipairs(targets) do
+		G.E_MANAGER:add_event(Event({
+			trigger = 'after',
+			delay = 0.15,
+			func = function()
+				c:flip()
+				play_sound('card1', 1.1)
+				return true
+			end,
+		}))
+	end
+	for _, c in ipairs(targets) do
+		G.E_MANAGER:add_event(Event({
+			trigger = 'after',
+			delay = 0.1,
+			func = function()
+				apply(c)
+				return true
+			end,
+		}))
+	end
+	for _, c in ipairs(targets) do
+		G.E_MANAGER:add_event(Event({
+			trigger = 'after',
+			delay = 0.15,
+			func = function()
+				c:flip()
+				play_sound('tarot2', 1, 0.6)
+				c:juice_up(0.3, 0.3)
+				return true
+			end,
+		}))
+	end
+	G.E_MANAGER:add_event(Event({
+		trigger = 'after',
+		delay = 0.2,
+		func = function()
+			G.hand:unhighlight_all()
+			return true
+		end,
+	}))
+end
+
+local function card_tarot(key, pos, max, apply, info)
+	SMODS.Consumable({
+		key = key,
+		set = 'Tarot',
+		atlas = 'coop_tarots',
+		pos = { x = pos, y = 0 },
+		cost = 3,
+		config = { max_highlighted = max },
+		in_pool = coop_pool,
+		loc_vars = function(self, info_queue, card)
+			if info then
+				info_queue[#info_queue + 1] = info()
+			end
+			return { vars = { card.ability.max_highlighted } }
+		end,
+		use = function(self, card, area)
+			on_selected(card, card.ability.max_highlighted, apply)
+		end,
+	})
+end
+
+card_tarot('bond', 0, 2, function(c)
+	c:set_seal('coop_bond', nil, true)
+end, function()
+	return G.P_SEALS.coop_bond
+end)
+
+card_tarot('offering', 1, 2, function(c)
+	c:set_seal('coop_sacrifice', nil, true)
+end, function()
+	return G.P_SEALS.coop_sacrifice
+end)
+
+card_tarot('fortress', 2, 2, function(c)
+	c:set_ability(G.P_CENTERS.m_coop_bulwark, nil, true)
+end, function()
+	return G.P_CENTERS.m_coop_bulwark
+end)
+
+-- The Twins: the other half of a pair joker the partner holds
+local function twins_target()
+	for _, k in ipairs(COOP.partner_jokers()) do
+		local short = k:gsub('^j_coop_', '')
+		local other = CC.PAIRS[short] and ('j_coop_' .. CC.PAIRS[short])
+		if other and not i_have_joker(other) then
+			return other
+		end
+	end
+end
+
+SMODS.Consumable({
+	key = 'twins',
+	set = 'Tarot',
+	atlas = 'coop_tarots',
+	pos = { x = 3, y = 0 },
+	cost = 3,
+	in_pool = coop_pool,
+	loc_vars = function(self, info_queue, card)
+		local t = COOP.is_active() and twins_target()
+		return { vars = { t and localize({ type = 'name_text', set = 'Joker', key = t }) or localize('k_coop_no_pair') } }
+	end,
+	can_use = function(self, card)
+		return COOP.is_active() and twins_target() ~= nil and G.jokers and #G.jokers.cards < G.jokers.config.card_limit
+	end,
+	use = function(self, card, area)
+		local key = twins_target()
+		G.E_MANAGER:add_event(Event({
+			trigger = 'after',
+			delay = 0.4,
+			func = function()
+				add_joker(key, '')
+				play_sound('timpani')
+				return true
+			end,
+		}))
+	end,
+})
+
+-- Co-op Pack -------------------------------------------------------------------------
+
+local TAROTS = { 'c_coop_bond', 'c_coop_offering', 'c_coop_fortress', 'c_coop_twins' }
+local JOKERS = { 'j_coop_yin', 'j_coop_yang', 'j_coop_sun', 'j_coop_moon', 'j_coop_sword', 'j_coop_shield' }
+
+local function pack_card(i)
+	local roll = pseudorandom('coop_pack')
+	if roll < 0.45 then
+		return { key = pseudorandom_element(TAROTS, pseudoseed('coop_pack_t')), area = G.pack_cards, skip_materialize = true }
+	elseif roll < 0.55 then
+		return { key = 'c_coop_swap', area = G.pack_cards, skip_materialize = true }
+	end
+	return { key = pseudorandom_element(JOKERS, pseudoseed('coop_pack_j')), area = G.pack_cards, skip_materialize = true }
+end
+
+local function pack(key, pos, extra, choose, cost, weight)
+	SMODS.Booster({
+		key = key,
+		kind = 'Coop',
+		atlas = 'coop_boosters',
+		pos = { x = pos, y = 0 },
+		config = { extra = extra, choose = choose },
+		cost = cost,
+		weight = weight,
+		draw_hand = true,
+		group_key = 'k_coop_pack',
+		in_pool = coop_pool,
+		loc_vars = function(self, info_queue, card)
+			return { vars = { card.ability.choose, card.ability.extra } }
+		end,
+		create_card = function(self, card, i)
+			return pack_card(i)
+		end,
+		ease_background_colour = function(self)
+			ease_colour(G.C.DYN_UI.MAIN, HEX('2FB8A8'))
+			ease_background_colour({ new_colour = HEX('2FB8A8'), special_colour = G.C.PURPLE, contrast = 2 })
+		end,
+	})
+end
+
+pack('pack_normal', 0, 3, 1, 6, 0.8)
+pack('pack_mega', 1, 5, 2, 9, 0.25)
+
+-- Mod-wide scoring: Bulwark from the partner's hand -------------------------------
+
+COOP.calculate = function(self, context)
+	if context.joker_main and COOP.is_active() then
+		local x = CC.bulwark_xmult()
+		if x then
+			return { xmult = x, message = localize('k_coop_bulwark_msg') }
+		end
+	end
+end

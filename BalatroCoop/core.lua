@@ -2,9 +2,9 @@ COOP = SMODS.current_mod
 
 COOP.GAMEMODE = 'coop_shared_blind'
 
--- MPAPI.truncate cuts by bytes, which splits Cyrillic (2-byte) letters in a
--- Steam name and crashes the UI with "Invalid UTF-8". Cut by characters instead.
-MPAPI.truncate = function(s, max)
+-- Cut a string to max characters (not bytes: cutting bytes splits Cyrillic
+-- letters in a Steam name and crashes the UI with "Invalid UTF-8").
+COOP.truncate = function(s, max)
 	if not s then
 		return s
 	end
@@ -32,6 +32,9 @@ end
 
 load('domain/modes.lua')
 load('domain/synergy.lua')
+load('domain/challenges.lua')
+load('domain/history.lua')
+load('domain/consumables.lua')
 load('domain/shared_blind.lua')
 load('domain/deck.lua')
 load('domain/flow.lua')
@@ -40,16 +43,23 @@ load('domain/money.lua')
 load('domain/tarot.lua')
 load('domain/team.lua')
 load('domain/vouchers.lua')
+load('net/lobby.lua')
 load('net/steam.lua')
 load('net/steam_lobby.lua')
+load('ui/pages.lua')
 load('ui/partner_view.lua')
 load('ui/chat.lua')
+load('ui/social.lua')
 load('ui/casino.lua')
 load('ui/status.lua')
 load('ui/menus.lua')
 -- SMODS objects must be registered while mods load
 load('objects/jokers.lua')
 load('objects/team_jokers.lua')
+load('objects/coop_bosses.lua')
+load('objects/coop_decks.lua')
+load('objects/coop_cards.lua')
+load('objects/art.lua')
 
 -- Diagnostics in the Lovely log (Mods/lovely/log), tagged "Coop".
 function COOP.debug(fmt, ...)
@@ -58,7 +68,7 @@ function COOP.debug(fmt, ...)
 end
 
 function COOP.is_active()
-	return COOP.in_run and G.STAGE == G.STAGES.RUN and MPAPI.is_active(COOP.id)
+	return COOP.in_run and G.STAGE == G.STAGES.RUN and COOP.get_lobby() ~= nil
 end
 
 -- Our own co-op messages ("Your turn!", "Partner +N"...) show above the deck,
@@ -146,6 +156,8 @@ local MESSAGES = {
 	take_reject = { uid = STR },
 	ready_blind = { round = NUM, hands_left = NUM, played = NUM, total = NUM, turn = NUM },
 	unstick = { round = NUM },
+	cons_add = { cid = STR, key = STR, edition = STR },
+	cons_remove = { cid = STR },
 	state = { hand = STR, jokers = STR, hands_left = NUM, discards_left = NUM },
 	play = { cards = STR },
 	discard = { ids = STR },
@@ -164,9 +176,38 @@ local MESSAGES = {
 	start = { seed = STR },
 	money = { amount = NUM },
 	use_on_partner = { key = STR, ids = STR },
+	wheel = { i = NUM },
+	ping = { k = STR, id = STR, lvl = NUM },
+	activity = { s = STR },
+	swap = { key = STR, edition = STR, idx = NUM },
+	swap_back = { key = STR, edition = STR },
+	bond_draw = { n = NUM },
+	sacrifice = { n = NUM },
 }
 
 local HANDLERS = {
+	swap = function(p)
+		COOP.CARDS.on_swap(p.key, p.edition, p.idx)
+	end,
+	swap_back = function(p)
+		COOP.CARDS.on_swap_back(p.key, p.edition)
+	end,
+	bond_draw = function(p)
+		COOP.CARDS.on_bond_draw(p.n)
+	end,
+	sacrifice = function(p)
+		COOP.CARDS.on_sacrifice(p.n)
+	end,
+	-- also in IMMEDIATE below; here for the solo test's mirror, which goes through the inbox
+	wheel = function(p)
+		COOP.SOCIAL.on_wheel(p.i)
+	end,
+	ping = function(p)
+		COOP.SOCIAL.on_ping(p.k, p.id, p.lvl)
+	end,
+	activity = function(p)
+		COOP.SOCIAL.on_activity(p.s)
+	end,
 	score = function(p)
 		COOP.SB.on_partner_report(p.round, p.total, p.hands_left, p.hand, p.played)
 		COOP.TEAM.on_partner_mult(p.mult)
@@ -191,7 +232,7 @@ local HANDLERS = {
 		COOP.DECK.on_remove(p.uid)
 	end,
 	deck_order = function(p)
-		local lobby = MPAPI.get_current_lobby()
+		local lobby = COOP.get_lobby()
 		if lobby and not lobby.is_host then
 			COOP.DECK.on_order(p.uids)
 		end
@@ -218,7 +259,7 @@ local HANDLERS = {
 		COOP.SB.on_partner_blind(p.round, p.disabled, p.chips)
 	end,
 	claim = function(p)
-		local lobby = MPAPI.get_current_lobby()
+		local lobby = COOP.get_lobby()
 		if lobby and lobby.is_host then
 			COOP.SHOP.on_claim(p.sid)
 		end
@@ -257,6 +298,12 @@ local HANDLERS = {
 	unstick = function(p)
 		COOP.SB.on_partner_unstick(p.round)
 	end,
+	cons_add = function(p)
+		COOP.CONS.on_add(p.cid, p.key, p.edition)
+	end,
+	cons_remove = function(p)
+		COOP.CONS.on_remove(p.cid)
+	end,
 	state = function(p)
 		COOP.PV.on_partner_state(p)
 	end,
@@ -264,13 +311,13 @@ local HANDLERS = {
 		COOP.SHOP.on_listing(p.round, p.reroll_cost, p.items)
 	end,
 	taken = function(p)
-		local lobby = MPAPI.get_current_lobby()
+		local lobby = COOP.get_lobby()
 		if lobby and lobby.is_host then
 			COOP.SHOP.host_on_taken(p.sid)
 		end
 	end,
 	reroll = function(p)
-		local lobby = MPAPI.get_current_lobby()
+		local lobby = COOP.get_lobby()
 		if lobby and lobby.is_host and p.round == G.GAME.round then
 			COOP.SHOP.pending_reroll = true
 		end
@@ -292,15 +339,12 @@ local HANDLERS = {
 	end,
 }
 
--- Outgoing messages are batched. The server rate-limits actions and silently
--- refuses the excess, and a single scored hand alone makes dozens of messages
--- (every popup and every chips/mult update). So COOP.send only queues; the
--- queue goes out as one 'batch' action at most every FLUSH_EVERY seconds,
--- split into chunks under the server's 16KB-per-message limit.
+-- Outgoing messages are batched: a single scored hand alone makes dozens of
+-- messages (every popup and every chips/mult update). So COOP.send only
+-- queues; the queue goes out as one Steam packet at most every FLUSH_EVERY
+-- seconds.
 
 local FLUSH_EVERY = 0.1
-local CHUNK_BYTES = 4000
-local has_json, json = pcall(require, 'json')
 
 COOP.outbox = {}
 local flush_timer = 0
@@ -367,61 +411,8 @@ function COOP.flush(dt)
 		return
 	end
 	flush_timer = 0
-	local lobby = MPAPI.get_current_lobby()
-	if lobby and lobby.coop_steam then
-		-- Steam P2P: no rate limit, the whole queue is one packet
-		COOP.SL.flush(COOP.outbox)
-		COOP.outbox = {}
-		return
-	end
-	if not lobby or not COOP.batch_action then
-		COOP.outbox = {}
-		return
-	end
-	-- One chunk per flush: a scored hand is a burst of dozens of messages and
-	-- the server refuses big bursts, so it goes out as small chunks spread
-	-- over a few tenths of a second (order kept; the rest waits in the queue).
-	local chunk, size, taken = {}, 0, 0
-	for _, msg in ipairs(COOP.outbox) do
-		local ok, encoded = false, nil
-		if has_json then
-			ok, encoded = pcall(json.encode, msg)
-		end
-		local bytes = ok and #encoded or 500
-		if #chunk > 0 and size + bytes > CHUNK_BYTES then
-			break
-		end
-		chunk[#chunk + 1] = msg
-		size = size + bytes
-		taken = taken + 1
-	end
-	local rest = {}
-	for i = taken + 1, #COOP.outbox do
-		rest[#rest + 1] = COOP.outbox[i]
-	end
-	COOP.outbox = rest
-	lobby:action(COOP.batch_action)
-		:callback(function(_, _, err)
-			if err then
-				COOP.debug('batch of %d refused: %s %s', #chunk, tostring(err.kind), tostring(err.message))
-			end
-		end)
-		:broadcast({ msgs = chunk })
-end
-
-local function register_actions()
-	COOP.batch_action = MPAPI.ActionType({
-		key = 'coop_batch',
-		parameters = { { key = 'msgs', type = TBL, required = true } },
-		on_receive = function(self, from, params)
-			local lobby = MPAPI.get_current_lobby()
-			if not lobby or from == lobby.player_id then
-				return true
-			end
-			COOP.receive_msgs(params.msgs or {})
-			return true
-		end,
-	})
+	COOP.SL.flush(COOP.outbox) -- Steam P2P: the whole queue is one packet
+	COOP.outbox = {}
 end
 
 -- Lobby-level messages work outside a run too, so they skip the inbox.
@@ -441,9 +432,18 @@ local IMMEDIATE = {
 	start = function(p)
 		COOP.SL.on_start(p.seed)
 	end,
+	wheel = function(p)
+		COOP.SOCIAL.on_wheel(p.i)
+	end,
+	ping = function(p)
+		COOP.SOCIAL.on_ping(p.k, p.id, p.lvl)
+	end,
+	activity = function(p)
+		COOP.SOCIAL.on_activity(p.s)
+	end,
 }
 
--- A batch from the partner, from the server (MPAPI) or Steam (net/steam_lobby.lua).
+-- A batch from the partner over Steam (net/steam_lobby.lua).
 function COOP.receive_msgs(msgs)
 	for _, msg in ipairs(msgs) do
 		if type(msg) == 'table' and IMMEDIATE[msg.n] and valid(msg.n, msg.p) then
@@ -489,7 +489,7 @@ function COOP.on_hello(version)
 	if first then
 		COOP.send_hello() -- so a newcomer learns ours too
 	end
-	MPAPI.refresh_current_view()
+	COOP.refresh_view()
 end
 
 function COOP.versions_match()
@@ -510,7 +510,7 @@ local function start_pending_run()
 		return
 	end
 	COOP.pending_run = nil
-	if p.lobby ~= MPAPI.get_current_lobby() then
+	if p.lobby ~= COOP.get_lobby() then
 		return
 	end
 	if G.STAGE == G.STAGES.RUN then
@@ -524,10 +524,15 @@ local function start_pending_run()
 	COOP.DECK.reset()
 	COOP.SYN.reset()
 	COOP.TEAM.reset()
+	COOP.CONS.reset()
+	COOP.SOCIAL.reset()
 	-- keep COOP.inbox: the partner's run may already be sending
 	COOP.in_run = true
 	COOP.result_sent = false
 	COOP.MODES.freeze()
+	if COOP.MODES.get('run') == 'daily' then
+		p.seed = COOP.CHALLENGE.daily_seed(COOP.MODES.daily_date()) -- same seed for every pair today
+	end
 	G.GAME.viewed_back = Back(G.P_CENTERS[COOP.MODES.get('back')] or G.P_CENTERS.b_red)
 	COOP.starting = true
 	local ok, err = pcall(G.FUNCS.start_run, nil, { stake = tonumber(COOP.MODES.get('stake')) or 1, seed = p.seed })
@@ -547,7 +552,7 @@ G.FUNCS.start_run = function(...)
 		if COOP.TEST then
 			COOP.TEST = false
 			COOP.test_pending = {}
-			local lobby = MPAPI.get_current_lobby()
+			local lobby = COOP.get_lobby()
 			if lobby then
 				lobby:leave()
 			end
@@ -560,23 +565,6 @@ G.FUNCS.start_run = function(...)
 	return start_run_ref(...)
 end
 
-function COOP.report_result()
-	if COOP.result_sent then
-		return
-	end
-	COOP.result_sent = true
-	local lobby = MPAPI.get_current_lobby()
-	if not lobby or not MPAPI.has_server_referee(lobby) then
-		return
-	end
-	-- co-op: everyone shares the same place
-	local placements = {}
-	for _, p in ipairs(lobby:get_players()) do
-		placements[#placements + 1] = { playerId = p.id, place = 1 }
-	end
-	lobby:report_result(placements)
-end
-
 local go_to_menu_ref = G.FUNCS.go_to_menu
 G.FUNCS.go_to_menu = function(...)
 	COOP.pending_run = nil
@@ -585,7 +573,7 @@ G.FUNCS.go_to_menu = function(...)
 		-- the solo test's local lobby only lives for that one run
 		COOP.TEST = false
 		COOP.test_pending = {}
-		local lobby = MPAPI.get_current_lobby()
+		local lobby = COOP.get_lobby()
 		if lobby then
 			lobby:leave()
 		end
@@ -595,6 +583,7 @@ G.FUNCS.go_to_menu = function(...)
 	COOP.PV.remove()
 	COOP.STATUS.remove()
 	COOP.TEAM.reset()
+	COOP.SOCIAL.reset()
 	return go_to_menu_ref(...)
 end
 
@@ -605,30 +594,9 @@ local function step(name, fn, ...)
 	end
 end
 
-MPAPI.on_loaded(function()
+-- the game's own functions exist once the mods have loaded
+local function install()
 	COOP.register_pages()
-
-	MPAPI.register_mod({
-		id = COOP.id,
-		name = 'Co-op',
-		colour = G.C.BLUE,
-		main_menu_ui = 'coop_main_menu',
-		lobby_ui = 'coop_lobby',
-		prevent_pause = true,
-	})
-
-	MPAPI.GameMode({
-		key = COOP.GAMEMODE,
-		min_players = 2,
-		max_players = 2,
-		seed_change_allowed = false,
-		draw_vote_allowed = false,
-		start_run = function(self, seed, lobby)
-			COOP.request_run(seed, lobby)
-		end,
-	})
-
-	register_actions()
 	COOP.SB.install_hooks()
 	COOP.DECK.install_hooks()
 	COOP.FLOW.install_hooks()
@@ -638,19 +606,14 @@ MPAPI.on_loaded(function()
 	COOP.PV.install_hooks()
 	COOP.TEAM.install_hooks()
 	COOP.VOUCHERS.install_hooks()
-
-	local win_game_ref = win_game
-	function win_game(...)
-		if COOP.is_active() then
-			COOP.report_result()
-		end
-		return win_game_ref(...)
-	end
+	COOP.CHALLENGE.install_hooks()
+	COOP.HISTORY.install_hooks()
 
 	local game_update_ref = Game.update
 	function Game:update(dt)
 		game_update_ref(self, dt)
 		step('start run', start_pending_run)
+		step('pages', COOP.PAGES.update)
 		step('steam', COOP.SL.update)
 		step('send', COOP.flush, dt)
 		if not COOP.is_active() then
@@ -664,11 +627,13 @@ MPAPI.on_loaded(function()
 		step('partner view', COOP.PV.update, dt)
 		step('partner tarot', COOP.TAROT.update)
 		step('casino', COOP.CASINO.update)
+		step('history', COOP.HISTORY.update)
+		step('shared consumables', COOP.CONS.update, dt)
 		step('shared deck', COOP.DECK.update, dt)
 		step('team jokers', COOP.TEAM.update)
+		step('social', COOP.SOCIAL.update)
+		step('co-op cards', COOP.CARDS.update)
 		step('team panel', COOP.STATUS.update)
-		if G.STATE == G.STATES.GAME_OVER then
-			COOP.report_result()
-		end
 	end
-end)
+end
+install()

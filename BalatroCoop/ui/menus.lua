@@ -1,8 +1,6 @@
--- Pre-lobby page (Create / Join / Rules) and the lobby page: code, players
--- with ready state, game options (host edits, guest sees), ready / start,
--- rules, chat.
-
-local code_ref = { text = '' }
+-- The co-op menu page (Steam / solo test / rules...) and the lobby page:
+-- players with ready state, game options (host edits, guest sees), ready /
+-- start, rules, chat. Shown by ui/pages.lua.
 
 local PANEL = { 0, 0, 0, 0.55 }
 
@@ -38,95 +36,15 @@ local function root(nodes)
 	}
 end
 
--- Lobby events ---------------------------------------------------------------
-
-function COOP.hook_lobby(lobby)
-	for _, ev in ipairs({ 'player_joined', 'player_left', 'metadata_changed', 'host_changed', 'player_ready_changed' }) do
-		lobby:on(ev, function()
-			MPAPI.refresh_current_view()
-		end)
-	end
-	COOP.partner_version = nil
-	lobby:on('player_joined', function()
-		COOP.send_hello()
-	end)
-	lobby:on('player_left', function()
-		COOP.partner_version = nil
-	end)
-	lobby:on('connected', function()
-		COOP.send_hello()
-		if lobby.is_host and lobby.code then
-			love.system.setClipboardText(lobby.code)
-		end
-	end)
-	lobby:on('game_started', function(started)
-		local gm = MPAPI.GameModes[COOP.GAMEMODE]
-		local instance = gm:new_instance()
-		lobby:set_gamemode_instance(instance)
-		instance:start_run(started.seed, lobby)
-	end)
-end
-
 -- Buttons ----------------------------------------------------------------------
 
-G.FUNCS.coop_create = function()
-	local lobby = MPAPI.create_lobby(COOP.id, { max_players = 2 })
-	if lobby then
-		COOP.hook_lobby(lobby)
-	end
-end
-
--- Solo test: a local lobby (no server) and a mirror "partner" that replays
--- our own moves (see COOP.flush / COOP.release_test_mirror in core.lua).
+-- Solo test: a lobby with just us and a mirror "partner" that replays our
+-- own moves (see COOP.flush / COOP.release_test_mirror in core.lua).
 G.FUNCS.coop_solo_test = function()
-	local lobby = MPAPI.create_local_lobby(COOP.id, { max_players = 1 })
-	if not lobby then
-		return
-	end
-	lobby.suppress_lobby_view = true
+	COOP.LOBBY.create({ host = true, view = false })
 	COOP.TEST = true
 	COOP.test_pending = {}
-	lobby:on('connected', function()
-		COOP.request_run(tostring(math.random(10000000, 99999999)), lobby)
-	end)
-end
-
-G.FUNCS.coop_join = function()
-	code_ref.text = ''
-	G.FUNCS.overlay_menu({
-		definition = create_UIBox_generic_options({
-			snap_back = true,
-			contents = {
-				row({ text(localize('k_coop_enter_code'), 0.5) }),
-				row({
-					create_text_input({ ref_table = code_ref, ref_value = 'text', prompt_text = localize('k_lobby_code_cap'),
-						max_length = 6, all_caps = true, w = 4, h = 0.6 }),
-				}),
-				row({ button('coop_join_confirm', localize('k_coop_join'), G.C.GREEN) }),
-			},
-		}),
-	})
-end
-
-G.FUNCS.coop_join_confirm = function()
-	-- read the closure's ref table: the UIE lookup is nil inside generic_options
-	local code = (code_ref.text or ''):match('^%s*(.-)%s*$') or ''
-	if #code == 0 then
-		return
-	end
-	G.FUNCS.exit_overlay_menu()
-	local lobby = MPAPI.join_lobby(COOP.id, code)
-	if lobby then
-		COOP.hook_lobby(lobby)
-	end
-end
-
-G.FUNCS.coop_copy_code = function()
-	local lobby = MPAPI.get_current_lobby()
-	if lobby and lobby.code then
-		love.system.setClipboardText(lobby.code)
-		play_sound('card1')
-	end
+	COOP.request_run(tostring(math.random(10000000, 99999999)), COOP.get_lobby())
 end
 
 local function me(lobby)
@@ -138,13 +56,7 @@ local function me(lobby)
 end
 
 G.FUNCS.coop_ready = function()
-	local lobby = MPAPI.get_current_lobby()
-	if lobby and lobby.coop_steam then
-		COOP.SL.toggle_ready()
-	elseif lobby then
-		local p = me(lobby)
-		lobby:set_ready(not (p and p.ready))
-	end
+	COOP.SL.toggle_ready()
 end
 
 local function guest_ready(lobby)
@@ -161,35 +73,11 @@ local function guest_ready(lobby)
 end
 
 G.FUNCS.coop_start = function()
-	local lobby = MPAPI.get_current_lobby()
-	if not (lobby and lobby.is_host) then
-		return
-	end
-	if lobby.coop_steam then
-		COOP.SL.start()
-		return
-	end
-	if not MPAPI.has_server_referee(lobby) then
-		-- local test lobby: no server to pick a seed, start straight away
-		COOP.request_run(tostring(math.random(10000000, 99999999)), lobby)
-		return
-	end
-	lobby:set_metadata({ gamemode = COOP.GAMEMODE })
-	lobby:start_game({ stake = tonumber(COOP.MODES.lobby_value('stake')) or 1, options = { gamemode = COOP.GAMEMODE }, min_players = 2 },
-		function(err)
-			if err then
-				sendWarnMessage('start_game failed: ' .. tostring(err.message), COOP.id)
-			end
-		end)
+	COOP.SL.start()
 end
 
 G.FUNCS.coop_leave = function()
-	local lobby = MPAPI.get_current_lobby()
-	if lobby and lobby.coop_steam then
-		COOP.SL.leave()
-	elseif lobby then
-		lobby:leave()
-	end
+	COOP.SL.leave()
 end
 
 -- Option cycles: host only.
@@ -204,29 +92,164 @@ end
 
 -- Rules overlay ------------------------------------------------------------------
 
-G.FUNCS.coop_rules = function()
-	local contents = { row({ text(localize('k_coop_rules'), 0.6) }) }
+-- Rules come in sections (lines starting with '# ' in the localization); one
+-- section per page plus a page with the current options, so it always fits.
+local function rule_sections()
+	local sections, current = {}, nil
 	local i = 1
 	while true do
-		local key = 'k_coop_rule_' .. i
-		local line = G.localization.misc.dictionary[key]
+		local line = G.localization.misc.dictionary['k_coop_rule_' .. i]
 		if not line then
 			break
 		end
-		-- lines starting with '# ' are section headers
-		local header = line:sub(1, 2) == '# '
-		contents[#contents + 1] = row({ text(header and line:sub(3) or line, header and 0.4 or 0.32, header and G.C.FILTER or G.C.WHITE) }, 'cl', 0.02)
+		if line:sub(1, 2) == '# ' or not current then
+			current = { title = line:sub(1, 2) == '# ' and line:sub(3) or localize('k_coop_rules'), lines = {} }
+			sections[#sections + 1] = current
+		end
+		if line:sub(1, 2) ~= '# ' then
+			current.lines[#current.lines + 1] = line
+		end
 		i = i + 1
 	end
-	contents[#contents + 1] = row({ text(localize('k_coop_current_modes'), 0.4, G.C.FILTER) }, 'cl')
+	local modes = { title = localize('k_coop_current_modes'), lines = {} }
 	for _, o in ipairs(COOP.MODES.OPTIONS) do
 		local value = G.STAGE == G.STAGES.RUN and COOP.MODES.get(o.key) or COOP.MODES.lobby_value(o.key)
-		contents[#contents + 1] = row({ text(COOP.MODES.label(o.key) .. ': ' .. COOP.MODES.value_label(o.key, value), 0.32) }, 'cl', 0.01)
+		modes.lines[#modes.lines + 1] = COOP.MODES.label(o.key) .. ': ' .. COOP.MODES.value_label(o.key, value)
+	end
+	sections[#sections + 1] = modes
+	return sections
+end
+
+local function show_rules(page)
+	local sections = rule_sections()
+	page = math.max(1, math.min(page or 1, #sections))
+	local titles = {}
+	for i, sec in ipairs(sections) do
+		titles[i] = sec.title
+	end
+	local contents = {
+		row({ text(localize('k_coop_rules'), 0.6, G.C.GOLD) }),
+		row({ create_option_cycle({ options = titles, current_option = page, opt_callback = 'coop_rules_page',
+			w = 6, scale = 0.8, colour = G.C.RED }) }),
+	}
+	for _, line in ipairs(sections[page].lines) do
+		contents[#contents + 1] = row({ text(line, 0.32) }, 'cl', 0.03)
 	end
 	G.FUNCS.overlay_menu({ definition = create_UIBox_generic_options({ snap_back = true, contents = contents }) })
 end
 
+G.FUNCS.coop_rules = function()
+	show_rules(1)
+end
+
+G.FUNCS.coop_rules_page = function(args)
+	show_rules(args.to_key)
+end
+
 -- Pages ----------------------------------------------------------------------------
+
+-- What the chosen options mean, under the players: the deck (its card and
+-- its own description, as on the run setup screen), the challenge and the
+-- daily run.
+local function deck_preview()
+	local key = COOP.MODES.lobby_value('back')
+	local center = G.P_CENTERS[key]
+	if not center then
+		return nil
+	end
+	local atlas = G.ASSET_ATLAS[center.atlas or 'centers'] or G.ASSET_ATLAS.centers
+	local sprite = Sprite(0, 0, G.CARD_W * 0.42, G.CARD_H * 0.42, atlas, center.pos)
+	return row({
+		{ n = G.UIT.C, config = { align = 'cm', padding = 0.05, r = 0.08, colour = G.C.BLACK, button = 'coop_deck_view', hover = true, shadow = true,
+			tooltip = { text = { localize('k_coop_deck_view_hint') } } }, nodes = {
+			{ n = G.UIT.O, config = { object = sprite } },
+		} },
+		col({ text(COOP.MODES.value_label('back', key), 0.32, G.C.FILTER) }, { align = 'cl', padding = 0.05 }),
+	}, 'cm', 0.02)
+end
+
+-- Deck viewer, the same as the game's Collection > Decks: a stack of cards
+-- with the deck's back, its name and description, < > to browse. For the
+-- host browsing also picks the deck for the run; the guest only looks.
+local DECK_VIEW_CARDS = 12
+
+local function deck_values()
+	return COOP.MODES.option('back').values
+end
+
+G.FUNCS.coop_deck_view = function()
+	local values = deck_values()
+	local current = COOP.MODES.lobby_value('back')
+	local idx, names = 1, {}
+	for i, v in ipairs(values) do
+		names[i] = COOP.MODES.value_label('back', v)
+		if v == current then
+			idx = i
+		end
+	end
+	G.GAME.viewed_back = Back(G.P_CENTERS[values[idx]] or G.P_CENTERS.b_red)
+	local area = CardArea(G.ROOM.T.x + 0.2 * G.ROOM.T.w / 2, G.ROOM.T.h, 1.2 * G.CARD_W, 1.2 * G.CARD_H,
+		{ card_limit = DECK_VIEW_CARDS, type = 'deck', highlight_limit = 0 })
+	for i = 1, DECK_VIEW_CARDS do
+		local card = Card(G.ROOM.T.x + 0.2 * G.ROOM.T.w / 2, G.ROOM.T.h, G.CARD_W * 1.2, G.CARD_H * 1.2,
+			pseudorandom_element(G.P_CARDS), G.P_CENTERS.c_base, { playing_card = i, viewed_back = true })
+		card.sprite_facing = 'back'
+		card.facing = 'back'
+		area:emplace(card)
+	end
+	COOP.deck_view_area = area
+	local lobby = COOP.get_lobby()
+	local can_pick = lobby and lobby.is_host and not COOP.MODES.locked('back')
+	G.FUNCS.overlay_menu({ definition = create_UIBox_generic_options({ contents = {
+		create_option_cycle({ options = names, opt_callback = 'coop_deck_view_change', current_option = idx, colour = G.C.RED, w = 4.5,
+			focus_args = { snap_to = true }, mid = { n = G.UIT.R, config = { align = 'cm', minw = 2.5, padding = 0.1, r = 0.1, colour = G.C.BLACK, emboss = 0.05 }, nodes = {
+				{ n = G.UIT.R, config = { align = 'cm', padding = 0.2, colour = G.C.BLACK, r = 0.2 }, nodes = {
+					{ n = G.UIT.C, config = { align = 'cm', padding = 0 }, nodes = { { n = G.UIT.O, config = { object = area } } } },
+					{ n = G.UIT.C, config = { align = 'tm', minw = 3.7, minh = 2.1, r = 0.1, colour = G.C.L_BLACK, padding = 0.1 }, nodes = {
+						{ n = G.UIT.R, config = { align = 'cm', emboss = 0.1, r = 0.1, minw = 4, maxw = 4, minh = 0.6 }, nodes = {
+							{ n = G.UIT.O, config = { id = nil, func = 'RUN_SETUP_check_back_name', object = Moveable() } },
+						} },
+						{ n = G.UIT.R, config = { align = 'cm', colour = G.C.WHITE, emboss = 0.1, minh = 2.2, r = 0.1 }, nodes = {
+							{ n = G.UIT.O, config = { id = G.GAME.viewed_back.name, func = 'RUN_SETUP_check_back',
+								object = UIBox({ definition = G.GAME.viewed_back:generate_UI(), config = { offset = { x = 0, y = 0 } } }) } },
+						} },
+					} },
+				} },
+			} } }),
+		row({ text(localize(can_pick and 'k_coop_deck_view_pick' or 'k_coop_deck_view_look'), 0.32, G.C.UI.TEXT_LIGHT) }, 'cm', 0.05),
+	} }) })
+end
+
+G.FUNCS.coop_deck_view_change = function(args)
+	local key = deck_values()[args.to_key]
+	local center = key and G.P_CENTERS[key]
+	if not center then
+		return
+	end
+	G.GAME.viewed_back:change_to(center)
+	for _, c in ipairs(COOP.deck_view_area and COOP.deck_view_area.cards or {}) do
+		c.children.back = false
+		c:set_ability(c.config.center, true)
+	end
+	local lobby = COOP.get_lobby()
+	if lobby and lobby.is_host and not COOP.MODES.locked('back') then
+		COOP.MODES.set_lobby_value('back', key) -- the host picks the run's deck here
+	end
+end
+
+local function rules_preview()
+	local nodes = {}
+	if COOP.MODES.daily() then
+		nodes[#nodes + 1] = row({ text(localize('k_coop_daily_explain'), 0.28, G.C.GOLD) }, 'cm', 0.01)
+	end
+	local ch = COOP.MODES.lobby_value('challenge')
+	if ch and ch ~= 'none' then
+		nodes[#nodes + 1] = row({ text(localize('coop_val_challenge_' .. ch), 0.3, G.C.FILTER) }, 'cm', 0.01)
+		nodes[#nodes + 1] = row({ text(localize({ type = 'variable', key = 'coop_challenge_blind',
+			vars = { COOP.CHALLENGE.LIST[ch] and COOP.CHALLENGE.LIST[ch].blind or 1 } }), 0.26, G.C.UI.TEXT_LIGHT) }, 'cm', 0.01)
+	end
+	return nodes
+end
 
 local function players_column(lobby)
 	local nodes = { row({ text(localize('k_coop_players'), 0.45, G.C.FILTER) }) }
@@ -235,7 +258,7 @@ local function players_column(lobby)
 		return (a.id == lobby.host_id and 0 or 1) < (b.id == lobby.host_id and 0 or 1)
 	end)
 	for _, p in ipairs(players) do
-		local name = MPAPI.truncate(p.displayName or '?', 16)
+		local name = COOP.truncate(p.displayName or '?', 16)
 		local status, colour
 		if COOP.SL.is_partner_player(p) and COOP.SL.lost() then
 			status, colour = localize('k_coop_steam_no_link'), G.C.RED
@@ -252,86 +275,119 @@ local function players_column(lobby)
 			col({ text(status, 0.34, colour) }, { align = 'cr', minw = 1.6 }),
 		}, 'cm', 0.04)
 	end
-	if #players < 2 and lobby.coop_steam and COOP.SL.partner then
+	if #players < 2 and COOP.SL.partner then
 		nodes[#nodes + 1] = row({ text(localize('k_coop_steam_waiting'), 0.32, G.C.UI.TEXT_INACTIVE) })
-		nodes[#nodes + 1] = row({ text(MPAPI.truncate(COOP.SL.partner.name, 20), 0.34, G.C.FILTER) })
+		nodes[#nodes + 1] = row({ text(COOP.truncate(COOP.SL.partner.name, 20), 0.34, G.C.FILTER) })
 	elseif #players < 2 then
 		nodes[#nodes + 1] = row({ text(localize('k_coop_waiting_player'), 0.32, G.C.UI.TEXT_INACTIVE) })
 	elseif not COOP.partner_version then
 		nodes[#nodes + 1] = row({ text(localize('k_coop_version_unknown'), 0.3, G.C.UI.TEXT_INACTIVE) })
 	elseif not COOP.versions_match() then
 		nodes[#nodes + 1] = row({ text(localize('k_coop_version_differs') .. ': ' .. tostring(COOP.version)
-			.. ' / ' .. MPAPI.truncate(COOP.partner_version, 12), 0.3, G.C.RED) })
+			.. ' / ' .. COOP.truncate(COOP.partner_version, 12), 0.3, G.C.RED) })
+	end
+	-- the chosen deck and challenge, so both see what they are in for
+	local ok, dp = pcall(deck_preview)
+	if ok and dp then
+		nodes[#nodes + 1] = row({ text(localize('k_coop_preview'), 0.36, G.C.FILTER) }, 'cm', 0.06)
+		nodes[#nodes + 1] = dp
+	end
+	local ok2, rp = pcall(rules_preview)
+	for _, n in ipairs(ok2 and rp or {}) do
+		nodes[#nodes + 1] = n
 	end
 	return col(nodes, { align = 'tm', minw = 4.6, padding = 0.08, colour = { 0, 0, 0, 0.25 }, r = 0.1 })
 end
 
-local function options_column(lobby)
-	local nodes = { row({ text(localize('k_coop_modes'), 0.45, G.C.FILTER) }) }
-	for _, o in ipairs(COOP.MODES.OPTIONS) do
-		local current = COOP.MODES.lobby_value(o.key)
-		if lobby.is_host then
-			local labels, idx = {}, 1
-			for i, v in ipairs(o.values) do
-				labels[i] = COOP.MODES.value_label(o.key, v)
-				if v == current then
-					idx = i
-				end
-			end
-			nodes[#nodes + 1] = row({
-				col({ text(COOP.MODES.label(o.key), 0.32) }, { align = 'cl', minw = 2.2 }),
-				col({ create_option_cycle({ options = labels, current_option = idx, opt_callback = 'coop_opt_' .. o.key,
-					w = 3.6, scale = 0.7, no_pips = true, colour = G.C.RED }) }, { align = 'cm' }),
-			}, 'cm', 0.02)
-		else
-			nodes[#nodes + 1] = row({
-				col({ text(COOP.MODES.label(o.key), 0.32) }, { align = 'cl', minw = 2.2 }),
-				col({ text(COOP.MODES.value_label(o.key, current), 0.34, G.C.FILTER) }, { align = 'cl', minw = 3.6 }),
-			}, 'cm', 0.05)
-		end
+-- what an option means, shown on hover (localization coop_tip_<key>, lines split by |)
+local function option_tip(o)
+	local raw = G.localization.misc.dictionary['coop_tip_' .. o.key]
+	if not raw then
+		return nil
 	end
-	return col(nodes, { align = 'tm', minw = 6.2, padding = 0.08, colour = { 0, 0, 0, 0.25 }, r = 0.1 })
+	local lines = {}
+	for line in string.gmatch(raw, '[^|]+') do
+		lines[#lines + 1] = line
+	end
+	return { title = COOP.MODES.label(o.key), text = lines }
+end
+
+local function option_cell(lobby, o)
+	local current = COOP.MODES.lobby_value(o.key)
+	if lobby.is_host and not COOP.MODES.locked(o.key) then
+		local labels, idx = {}, 1
+		for i, v in ipairs(o.values) do
+			labels[i] = COOP.MODES.value_label(o.key, v)
+			if v == current then
+				idx = i
+			end
+		end
+		return col({
+			row({ text(COOP.MODES.label(o.key), 0.28, G.C.UI.TEXT_LIGHT) }, 'cm', 0),
+			row({ create_option_cycle({ options = labels, current_option = idx, opt_callback = 'coop_opt_' .. o.key,
+				w = 3.3, scale = 0.6, no_pips = true, colour = G.C.RED }) }, 'cm', 0),
+		}, { align = 'cm', minw = 4.4, padding = 0.02, tooltip = option_tip(o) })
+	end
+	-- the guest's view, and the daily run's fixed rules (in gold)
+	return col({
+		row({ text(COOP.MODES.label(o.key), 0.28, G.C.UI.TEXT_LIGHT) }, 'cm', 0),
+		row({ text(COOP.MODES.value_label(o.key, current), 0.32, COOP.MODES.locked(o.key) and G.C.GOLD or G.C.FILTER) }, 'cm', 0.04),
+	}, { align = 'cm', minw = 4.4, minh = 0.85, padding = 0.02, tooltip = option_tip(o) })
+end
+
+local function options_column(lobby)
+	local nodes = { row({ text(localize('k_coop_modes'), 0.42, G.C.FILTER) }, 'cm', 0.02) }
+	local opts = COOP.MODES.OPTIONS
+	for i = 1, #opts, 2 do
+		local cells = { option_cell(lobby, opts[i]) }
+		if opts[i + 1] then
+			cells[2] = option_cell(lobby, opts[i + 1])
+		end
+		nodes[#nodes + 1] = row(cells, 'cm', 0.01)
+	end
+	return col(nodes, { align = 'tm', padding = 0.06, colour = { 0, 0, 0, 0.25 }, r = 0.1 })
 end
 
 local function chat_rows()
 	local nodes = {}
-	local lines = COOP.CHAT.lines(4)
+	local lines = COOP.CHAT.lines(3)
 	if #lines == 0 then
-		nodes[#nodes + 1] = row({ text(localize('k_coop_chat_empty'), 0.3, G.C.UI.TEXT_INACTIVE) }, 'cl', 0.01)
+		return nil -- nothing said yet: no empty block taking up room
 	end
 	for _, l in ipairs(lines) do
-		nodes[#nodes + 1] = row({ text(MPAPI.truncate(l, 70), 0.3, G.C.UI.TEXT_LIGHT) }, 'cl', 0.01)
+		nodes[#nodes + 1] = row({ text(COOP.truncate(l, 70), 0.3, G.C.UI.TEXT_LIGHT) }, 'cl', 0.01)
 	end
-	return col(nodes, { align = 'tl', minw = 11, minh = 1.3, padding = 0.08, colour = { 0, 0, 0, 0.25 }, r = 0.1 })
+	return col(nodes, { align = 'tl', minw = 11, padding = 0.06, colour = { 0, 0, 0, 0.25 }, r = 0.1 })
 end
 
 function COOP.register_pages()
-	MPAPI.Page({
-		key = 'coop_main_menu',
-		category = 'mod_menu',
-		build = function(self)
-			MPAPI.set_logo_offset(-10, true) -- the logo would sit on top of the panel
-			return root({
-				row({ text(localize('k_coop_title'), 0.8, G.C.FILTER) }),
-				row({ text(localize('k_coop_tagline'), 0.35) }),
-				row({ button('coop_steam', localize('k_coop_steam'), G.C.GREEN, 5.4) }),
-				row({ text(localize('k_coop_steam_menu_hint'), 0.28, G.C.UI.TEXT_LIGHT) }),
-				row({ button('coop_create', localize('k_coop_create'), G.C.BLUE), button('coop_join', localize('k_coop_join'), G.C.BLUE) }),
+	COOP.PAGES.register('menu', function()
+			COOP.maybe_show_whats_new()
+			local buttons = col({
+				row({ button('coop_steam', localize('k_coop_steam'), G.C.GREEN, 5.4, 0.55) }),
+				row({ text(localize('k_coop_steam_menu_hint'), 0.28, G.C.UI.TEXT_LIGHT) }, 'cm', 0.02),
 				row({ button('coop_solo_test', localize('k_coop_solo_test'), G.C.SECONDARY_SET.Planet), button('coop_rules', localize('k_coop_rules'), G.C.ORANGE) }),
-				row({ text(localize('k_coop_solo_test_hint'), 0.28, G.C.UI.TEXT_LIGHT) }),
-			})
-		end,
-	})
+				row({ button('coop_history', localize('k_coop_history'), G.C.GOLD), button('coop_whats_new', localize('k_coop_whats_new'), G.C.PURPLE) }),
+				row({ text(localize('k_coop_solo_test_hint'), 0.26, G.C.UI.TEXT_LIGHT) }, 'cm', 0.02),
+			}, { align = 'cm', padding = 0.05 })
+			-- the logo sits above the panel, big like the game's own title
+			local logo = COOP.menu_sprite('coop_logo', 10, 10 * 262 / 480)
+			local panel = col({
+				row({ text(localize('k_coop_tagline'), 0.36) }, 'cm', 0.02),
+				row({ buttons }, 'cm', 0.06),
+			}, { align = 'cm', colour = PANEL, r = 0.15, padding = 0.18 })
+			return {
+				n = G.UIT.ROOT,
+				config = { align = 'cm', colour = G.C.CLEAR },
+				nodes = {
+					logo and row({ logo }, 'cm', 0) or row({ text(localize('k_coop_title'), 0.9, G.C.FILTER) }),
+					row({ panel }, 'cm', 0.05),
+				},
+			}
+	end)
 
-	MPAPI.Page({
-		key = 'coop_lobby',
-		category = 'lobby_menu',
-		build = function(self)
-			local lobby = MPAPI.get_current_lobby()
-			if not lobby then
-				return {}
-			end
-			MPAPI.set_logo_offset(-10, true) -- the logo would sit on top of the panel
+	COOP.PAGES.register('lobby', function()
+			local lobby = COOP.get_lobby()
 
 			local actions = {}
 			if lobby.is_host then
@@ -350,25 +406,121 @@ function COOP.register_pages()
 					actions[#actions + 1] = button('coop_ready', localize('k_coop_ready'), G.C.GREEN)
 				end
 			end
-			if lobby.coop_steam and lobby.is_host and not COOP.SL.connected() then
+			if lobby.is_host and not COOP.SL.connected() then
 				actions[#actions + 1] = button('coop_steam_overlay', localize('k_coop_steam_invite_any'), G.C.GREEN, 3.4)
 			end
 			actions[#actions + 1] = button('coop_rules', localize('k_coop_rules'), G.C.ORANGE, 2)
 			actions[#actions + 1] = button('coop_chat_open', localize('k_coop_chat'), G.C.SECONDARY_SET.Planet, 2)
 			actions[#actions + 1] = button('coop_leave', localize('k_coop_leave'), G.C.RED, 2)
 
+			local chat = chat_rows()
 			return root({
-				row({ text(localize('k_coop_lobby_title'), 0.7, G.C.FILTER) }),
-				lobby.coop_steam and row({ text(localize('k_coop_steam_lobby'), 0.45, G.C.GOLD) }) or row({
-					text(localize('k_lobby_code_cap') .. ': ', 0.45),
-					text(tostring(lobby.code or '...'), 0.55, G.C.GOLD),
-					{ n = G.UIT.B, config = { w = 0.2, h = 0.1 } },
-					button('coop_copy_code', localize('k_coop_copy'), G.C.GREY, 1.8, 0.35),
-				}),
+				row({ text(localize('k_coop_lobby_title'), 0.6, G.C.FILTER) }, 'cm', 0.02),
+				row({ text(localize('k_coop_steam_lobby'), 0.45, G.C.GOLD) }),
 				row({ players_column(lobby), { n = G.UIT.B, config = { w = 0.2, h = 0.1 } }, options_column(lobby) }, 'tm'),
-				row({ chat_rows() }),
+				chat and row({ chat }) or row({}, 'cm', 0),
 				row(actions),
 			})
+	end)
+end
+
+-- Menu art ---------------------------------------------------------------------
+
+-- one-frame sprite from objects/art.lua, nil if the atlas is missing
+function COOP.menu_sprite(atlas_key, w, h)
+	local atlas = G.ASSET_ATLAS[atlas_key]
+	if not atlas then
+		return nil
+	end
+	local ok, sprite = pcall(Sprite, 0, 0, w, h, atlas, { x = 0, y = 0 })
+	return ok and { n = G.UIT.O, config = { object = sprite } } or nil
+end
+
+-- What's new ----------------------------------------------------------------------
+--
+-- Opens by itself the first time the co-op menu is shown after an update
+-- (the last version seen is kept in coop_seen_version.txt), and from its button.
+
+local SEEN_FILE = 'coop_seen_version.txt'
+
+G.FUNCS.coop_whats_new = function()
+	local contents = { row({ text(localize('k_coop_whats_new_title') .. ' ' .. tostring(COOP.version), 0.6, G.C.GOLD) }) }
+	local i = 1
+	while G.localization.misc.dictionary['k_coop_new_' .. i] do
+		contents[#contents + 1] = row({ text(G.localization.misc.dictionary['k_coop_new_' .. i], 0.32) }, 'cl', 0.03)
+		i = i + 1
+	end
+	contents[#contents + 1] = row({ text(localize('k_coop_whats_new_more'), 0.28, G.C.UI.TEXT_LIGHT) }, 'cm', 0.08)
+	G.FUNCS.overlay_menu({ definition = create_UIBox_generic_options({ contents = contents }) })
+	pcall(love.filesystem.write, SEEN_FILE, tostring(COOP.version))
+end
+
+function COOP.maybe_show_whats_new()
+	if COOP.whats_new_checked then
+		return
+	end
+	COOP.whats_new_checked = true
+	local ok, seen = pcall(love.filesystem.read, SEEN_FILE)
+	if ok and seen == tostring(COOP.version) then
+		return
+	end
+	-- after the page is up (a page build can't open an overlay itself)
+	G.E_MANAGER:add_event(Event({
+		trigger = 'after',
+		delay = 0.4,
+		func = function()
+			if not G.OVERLAY_MENU then
+				G.FUNCS.coop_whats_new()
+			end
+			return true
 		end,
-	})
+	}))
+end
+
+-- History ----------------------------------------------------------------------
+
+local function history_row(e)
+	local H = COOP.HISTORY
+	local mode = (e.run == 'daily' and localize('k_coop_daily') or localize('k_coop_history_normal'))
+		.. ((e.challenge and e.challenge ~= 'none') and (' / ' .. H.challenge_name(e.challenge)) or '')
+	return row({
+		col({ text(tostring(e.date or ''), 0.3, G.C.UI.TEXT_LIGHT) }, { align = 'cl', minw = 2 }),
+		col({ text(localize(e.won and 'k_coop_history_won' or 'k_coop_history_lost'), 0.32, e.won and G.C.GREEN or G.C.RED) }, { align = 'cl', minw = 1.6 }),
+		col({ text(localize('k_ante') .. ' ' .. tostring(e.ante or 0), 0.32) }, { align = 'cl', minw = 1.4 }),
+		col({ text(number_format(e.best or 0), 0.32, G.C.CHIPS) }, { align = 'cr', minw = 1.8 }),
+		col({ text('  ' .. mode, 0.28, G.C.UI.TEXT_LIGHT) }, { align = 'cl', minw = 3.6 }),
+		col({ text(COOP.truncate(tostring(e.partner or '?'), 14), 0.28, G.C.FILTER) }, { align = 'cl', minw = 2 }),
+	}, 'cm', 0.02)
+end
+
+G.FUNCS.coop_history = function()
+	local H = COOP.HISTORY
+	local list = H.load()
+	local today = COOP.CHALLENGE.today()
+	local best = H.best_daily(today)
+	local contents = {
+		row({ text(localize('k_coop_history'), 0.6, G.C.GOLD) }),
+		row({ text(localize('k_coop_daily_today') .. ': ' .. H.challenge_name(COOP.CHALLENGE.daily_challenge(today)), 0.36, G.C.FILTER) }),
+		row({ text(best and H.share_text(best) or localize('k_coop_daily_none'), 0.3, best and G.C.WHITE or G.C.UI.TEXT_INACTIVE) }),
+	}
+	if #list == 0 then
+		contents[#contents + 1] = row({ text(localize('k_coop_history_empty'), 0.34, G.C.UI.TEXT_INACTIVE) }, 'cm', 0.2)
+	end
+	for i = 1, math.min(#list, 10) do
+		contents[#contents + 1] = history_row(list[i])
+	end
+	if list[1] then
+		contents[#contents + 1] = row({ button('coop_history_copy', localize('k_coop_history_copy'), G.C.BLUE, 4.2) }, 'cm', 0.1)
+	end
+	G.FUNCS.overlay_menu({ definition = create_UIBox_generic_options({ contents = contents }) })
+end
+
+-- copies today's best daily result, or else the last run
+G.FUNCS.coop_history_copy = function()
+	local H = COOP.HISTORY
+	local e = H.best_daily(COOP.CHALLENGE.today()) or H.load()[1]
+	if e then
+		love.system.setClipboardText(H.share_text(e))
+		play_sound('card1')
+	end
 end

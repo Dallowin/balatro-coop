@@ -430,7 +430,9 @@ function PV.clear_targets()
 end
 
 function PV.update_display()
-	if G.STAGE ~= G.STAGES.RUN or not G.play or not G.jokers or not visible_state() then
+	-- The Fog boss: the partner's board stays hidden this blind
+	local fog = COOP.boss_is and COOP.boss_is('bl_coop_fog')
+	if fog or G.STAGE ~= G.STAGES.RUN or not G.play or not G.jokers or not visible_state() then
 		if PV.hand_area then
 			PV.remove()
 		end
@@ -467,9 +469,11 @@ function PV.update_display()
 			joker_items[#joker_items + 1] = parse(code)
 		end
 		PV.hand_cards = sync(PV.hand_area, hand_items, HAND_SCALE, make_target_clickable, true)
-		-- look only: a click would select the copy and offer to sell it
+		-- a click only marks it for Swap: a real highlight would offer to sell the copy
 		PV.joker_cards = sync(PV.joker_area, joker_items, JOKER_SCALE, function(card)
-			card.click = function() end
+			card.click = function(self)
+				COOP.CARDS.pick_partner_joker(self) -- the target of Swap
+			end
 			apply_joker_state(card)
 		end)
 	end
@@ -662,6 +666,9 @@ end
 
 function PV.on_partner_live(p)
 	PV.ht_recv = (PV.ht_recv or 0) + 1
+	if COOP.boss_is and COOP.boss_is('bl_coop_fog') then
+		return -- hidden by The Fog
+	end
 	if p.name == '' and p.chips == 0 and p.mult == 0 and p.total == 0 then
 		-- their hand is over: clear it, unless we are scoring or picking cards ourselves
 		if G.STATE ~= G.STATES.HAND_PLAYED and #(G.hand and G.hand.highlighted or {}) == 0 then
